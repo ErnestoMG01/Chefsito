@@ -13,10 +13,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.chefsito.ui.components.ChefsitoBottomBar
-import com.example.chefsito.ui.screens.FavoritesScreen
-import com.example.chefsito.ui.screens.HomeScreen
-import com.example.chefsito.ui.screens.PlanScreen
-import com.example.chefsito.ui.screens.ProfileScreen
+import com.example.chefsito.ui.screens.favorite.FavoritesScreen
+import com.example.chefsito.ui.screens.home.HomeScreen
+import com.example.chefsito.ui.screens.plan.PlanScreen
+import com.example.chefsito.ui.screens.profile.ProfileScreen
 import com.example.chefsito.ui.theme.ChefsitoTheme
 
 class MainActivity : ComponentActivity() {

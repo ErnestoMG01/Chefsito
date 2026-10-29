@@ -1,4 +1,4 @@
-package com.example.chefsito.ui.screens
+package com.example.chefsito.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
