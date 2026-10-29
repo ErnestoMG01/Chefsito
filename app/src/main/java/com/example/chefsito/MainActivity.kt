@@ -3,65 +3,92 @@ package com.example.chefsito
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.chefsito.ui.components.ChefsitoBottomBar
-import com.example.chefsito.ui.screens.favorite.FavoritesScreen
+import com.example.chefsito.ui.screens.favorites.FavoritesScreen
 import com.example.chefsito.ui.screens.home.HomeScreen
+import com.example.chefsito.ui.screens.pantry.PantryScreen
 import com.example.chefsito.ui.screens.plan.PlanScreen
 import com.example.chefsito.ui.screens.profile.ProfileScreen
 import com.example.chefsito.ui.theme.ChefsitoTheme
+import com.example.chefsito.ui.viewmodel.ChefViewModel
+
+// Navegación única: evita apilar la misma pantalla varias veces
+private fun NavHostController.goTo(route: String) {
+    navigate(route) {
+        popUpTo(graph.startDestinationId) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
 
 class MainActivity : ComponentActivity() {
+
+    // ViewModel que conecta la base de datos Room con la UI
+    private val chefViewModel: ChefViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             ChefsitoTheme {
-                var currentRoute by remember { mutableStateOf("home") }
+                val navController = rememberNavController()
+
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route ?: "home"
+
+                val showBottomBar = currentRoute in listOf("home", "plan", "favorites", "profile", "pantry")
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        ChefsitoBottomBar(
-                            currentRoute = currentRoute,
-                            onNavigate = { route -> currentRoute = route },
-                        )
-                    },
+                        if (showBottomBar) {
+                            ChefsitoBottomBar(
+                                currentRoute = currentRoute,
+                                onNavigate = { route -> navController.goTo(route) }
+                            )
+                        }
+                    }
                 ) { innerPadding ->
-                    val screenModifier = Modifier.padding(innerPadding)
-                    when (currentRoute) {
-                        "home" -> HomeScreen(
-                            modifier = screenModifier,
-                            onNavigateToBudget = { currentRoute = "plan" },
-                            onNavigateToPantry = { currentRoute = "plan" },
-                            onNavigateToProfile = { currentRoute = "profile" },
-                        )
-                        "plan" -> PlanScreen(
-                            modifier = screenModifier,
-                            onNavigatePantry = { currentRoute = "plan" },
-                        )
-                        "favorites" -> FavoritesScreen(
-                            modifier = screenModifier,
-                            onRecipeClick = { /* ver detalle receta */ },
-                        )
-                        "profile" -> ProfileScreen(
-                            modifier = screenModifier,
-                            onLogout = { currentRoute = "home" },
-                        )
-                        else -> HomeScreen(
-                            modifier = screenModifier,
-                            onNavigateToBudget = { currentRoute = "plan" },
-                            onNavigateToPantry = { currentRoute = "plan" },
-                            onNavigateToProfile = { currentRoute = "profile" },
-                        )
+                    NavHost(
+                        navController = navController,
+                        startDestination = "home",
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+                        composable("home") {
+                            HomeScreen(
+                                onNavigateToBudget = { navController.goTo("plan") },
+                                onNavigateToPantry = { navController.goTo("pantry") },
+                                onNavigateToProfile = { navController.goTo("profile") }
+                            )
+                        }
+                        composable("plan") {
+                            PlanScreen(
+                                onNavigatePantry = { navController.goTo("pantry") }
+                            )
+                        }
+                        composable("favorites") {
+                            FavoritesScreen(
+                                onRecipeClick = { /* Detalle de receta */ }
+                            )
+                        }
+                        composable("profile") {
+                            ProfileScreen(
+                                onLogout = { navController.goTo("home") }
+                            )
+                        }
+                        composable("pantry") {
+                            PantryScreen(viewModel = chefViewModel)
+                        }
                     }
                 }
             }
