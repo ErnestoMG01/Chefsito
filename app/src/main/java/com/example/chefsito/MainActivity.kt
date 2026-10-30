@@ -72,7 +72,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("plan") {
                             PlanScreen(
-                                onNavigatePantry = { navController.goTo("pantry") }
+                                viewModel = chefViewModel,
+                                onNavigateHome = { navController.goTo("home") },
+                                onNavigatePantry = { navController.goTo("pantry") },
+                                onNavigateFavorites = { navController.goTo("favorites") },
+                                onNavigateProfile = { navController.goTo("profile") }
                             )
                         }
                         composable("favorites") {
@@ -82,7 +86,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("profile") {
                             ProfileScreen(
-                                onLogout = { navController.goTo("home") }
+                                viewModel = chefViewModel,
+                                onNavigateHome = { navController.goTo("home") },
+                                onNavigatePlan = { navController.goTo("plan") },
+                                onNavigateFavorites = { navController.goTo("favorites") },
+                                onNavigateProfile = { navController.goTo("profile") }
                             )
                         }
                         composable("pantry") {
