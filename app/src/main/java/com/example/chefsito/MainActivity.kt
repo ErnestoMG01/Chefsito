@@ -15,11 +15,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.chefsito.ui.components.ChefsitoBottomBar
+import com.example.chefsito.ui.screens.auth.AuthScreen
 import com.example.chefsito.ui.screens.favorites.FavoritesScreen
 import com.example.chefsito.ui.screens.home.HomeScreen
 import com.example.chefsito.ui.screens.pantry.PantryScreen
 import com.example.chefsito.ui.screens.plan.PlanScreen
 import com.example.chefsito.ui.screens.profile.ProfileScreen
+import com.example.chefsito.ui.screens.splash.SplashScreen
 import com.example.chefsito.ui.theme.ChefsitoTheme
 import com.example.chefsito.ui.viewmodel.ChefViewModel
 
@@ -60,9 +62,27 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = "splash",
                         modifier = Modifier.padding(innerPadding)
                     ) {
+                        composable("splash") {
+                            SplashScreen(
+                                onSplashFinished = {
+                                    navController.navigate("auth") {
+                                        popUpTo("splash") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable("auth") {
+                            AuthScreen(
+                                onLoginSuccess = { _ ->
+                                    navController.navigate("home") {
+                                        popUpTo("auth") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                         composable("home") {
                             HomeScreen(
                                 onNavigateToBudget = { navController.goTo("plan") },
@@ -82,7 +102,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("profile") {
                             ProfileScreen(
-                                onLogout = { navController.goTo("home") }
+                                onLogout = {
+                                    navController.navigate("auth") {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
                             )
                         }
                         composable("pantry") {
