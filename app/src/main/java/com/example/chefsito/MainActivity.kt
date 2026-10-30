@@ -23,7 +23,6 @@ import com.example.chefsito.ui.screens.profile.ProfileScreen
 import com.example.chefsito.ui.theme.ChefsitoTheme
 import com.example.chefsito.ui.viewmodel.ChefViewModel
 
-// Navegación única: evita apilar la misma pantalla varias veces
 private fun NavHostController.goTo(route: String) {
     navigate(route) {
         popUpTo(graph.startDestinationId) { saveState = true }
@@ -87,7 +86,10 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("pantry") {
-                            PantryScreen(viewModel = chefViewModel)
+                            PantryScreen(
+                                viewModel = chefViewModel,
+                                onNavigatePlan = { navController.goTo("plan") }
+                            )
                         }
                     }
                 }

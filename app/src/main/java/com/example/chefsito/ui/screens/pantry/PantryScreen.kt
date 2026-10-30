@@ -6,32 +6,59 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chefsito.ui.viewmodel.ChefViewModel
+import com.example.chefsito.data.local.entity.IngredientEntity
+import com.example.chefsito.ui.components.ChefsitoBackButton
+import com.example.chefsito.ui.components.ChefsitoConfirmDialog
+import com.example.chefsito.ui.components.ChefsitoIconButton
+import com.example.chefsito.ui.components.ChefsitoMessageBanner
+import com.example.chefsito.ui.components.MessageType
 import com.example.chefsito.ui.theme.*
+import com.example.chefsito.ui.viewmodel.ChefViewModel
 
 @Composable
 fun PantryScreen(
     viewModel: ChefViewModel,
     modifier: Modifier = Modifier,
+    onNavigatePlan: () -> Unit = {},
 ) {
-    // Recolectamos los ingredientes en tiempo real desde la base de datos local (Room)
     val pantryIngredients by viewModel.pantryIngredients.collectAsState()
 
     // Estados locales para el diálogo de agregar insumo
     var showAddDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var newPrice by remember { mutableStateOf("") }
+    var dialogError by remember { mutableStateOf<String?>(null) }
 
-    // Cálculo dinámico del costo total de los ingredientes en casa
+    // Estados para controlar la edición de un ingrediente existente
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedIngredient by remember { mutableStateOf<IngredientEntity?>(null) }
+    var editPriceText by remember { mutableStateOf("") }
+
+    // Estados para el diálogo de confirmación de borrado
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var ingredientToDelete by remember { mutableStateOf<IngredientEntity?>(null) }
+
+    // Estados para el banner de mensajes (feedback)
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+    var feedbackTitle by remember { mutableStateOf("") }
+    var feedbackType by remember { mutableStateOf(MessageType.SUCCESS) }
+
+    LaunchedEffect(feedbackMessage) {
+        if (feedbackMessage != null) {
+            kotlinx.coroutines.delay(3000)
+            feedbackMessage = null
+        }
+    }
+
     val totalPrice = pantryIngredients.sumOf { it.price }
 
     Column(
@@ -47,6 +74,22 @@ fun PantryScreen(
         ) {
             // Cabecera y Resumen
             item {
+                ChefsitoBackButton(
+                    text = "Configurar Plan",
+                    onBackClick = onNavigatePlan
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (feedbackMessage != null) {
+                    ChefsitoMessageBanner(
+                        title = feedbackTitle,
+                        message = feedbackMessage!!,
+                        type = feedbackType
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 Text(
                     text = "Mi Despensa",
                     fontSize = 22.sp,
@@ -107,9 +150,11 @@ fun PantryScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botón para abrir el diálogo de inserción
                 Button(
-                    onClick = { showAddDialog = true },
+                    onClick = {
+                        dialogError = null
+                        showAddDialog = true
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -151,7 +196,9 @@ fun PantryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Text(
                                 text = ingredient.name,
                                 fontWeight = FontWeight.Bold,
@@ -166,23 +213,27 @@ fun PantryScreen(
                             )
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "$${ingredient.price.toInt()} MXN",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = VerdeFresco
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            // Botón para eliminar el ingrediente de la base de datos
-                            IconButton(
-                                onClick = { viewModel.removeIngredient(ingredient) },
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp))
-                                    .background(NaranjaCoral)
-                            ) {
-                                Text(text = "✕", color = BlancoPuro, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            TextButton(onClick = {
+                                selectedIngredient = ingredient
+                                editPriceText = ingredient.price.toString()
+                                showEditDialog = true
+                            }) {
+                                Text(
+                                    text = "$${ingredient.price.toInt()} MXN",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = VerdeFresco
+                                )
                             }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            ChefsitoIconButton(
+                                onClick = {
+                                    ingredientToDelete = ingredient
+                                    showDeleteDialog = true
+                                }
+                            )
                         }
                     }
                 }
@@ -190,21 +241,36 @@ fun PantryScreen(
         }
     }
 
-    // Diálogo emergente para ingresar nuevos insumos
     if (showAddDialog) {
         AlertDialog(
-            onDismissRequest = { showAddDialog = false },
+            onDismissRequest = {
+                dialogError = null
+                showAddDialog = false
+            },
             modifier = Modifier.border(2.dp, TintaComic, RoundedCornerShape(16.dp)),
             containerColor = FondoCrema,
             title = {
                 Text(text = "Agregar insumo a despensa", fontWeight = FontWeight.Bold, color = TintaComic)
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+
+                    if (dialogError != null) {
+                        ChefsitoMessageBanner(
+                            title = "ERROR",
+                            message = dialogError!!,
+                            type = MessageType.WARNING
+                        )
+                    }
+
                     OutlinedTextField(
                         value = newName,
-                        onValueChange = { newName = it },
+                        onValueChange = {
+                            newName = it
+                            dialogError = null
+                        },
                         label = { Text("Nombre (ej. Pollo, Huevo)") },
+                        singleLine = true,
                         shape = RoundedCornerShape(8.dp)
                     )
                     OutlinedTextField(
@@ -220,12 +286,30 @@ fun PantryScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        val trimmedName = newName.trim()
                         val priceParsed = newPrice.toDoubleOrNull() ?: 0.0
-                        if (newName.isNotBlank()) {
-                            viewModel.saveIngredient(newName, "Abarrotes / General", priceParsed)
-                            newName = ""
-                            newPrice = ""
-                            showAddDialog = false
+
+                        when {
+                            trimmedName.isBlank() -> {
+                                dialogError = "El nombre del ingrediente no puede estar vacío."
+                            }
+                            pantryIngredients.any {
+                                it.name.equals(trimmedName, ignoreCase = true)
+                            } -> {
+                                dialogError = "Ese ingrediente ya está en tu despensa."
+                            }
+                            else -> {
+                                viewModel.saveIngredient(trimmedName, "Abarrotes / General", priceParsed)
+
+                                feedbackTitle = "ÉXITO"
+                                feedbackMessage = "$trimmedName se agregó a tu despensa."
+                                feedbackType = MessageType.SUCCESS
+
+                                newName = ""
+                                newPrice = ""
+                                dialogError = null
+                                showAddDialog = false
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = VerdeFresco)
@@ -234,9 +318,83 @@ fun PantryScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
+                TextButton(onClick = {
+                    dialogError = null
+                    showAddDialog = false
+                }) {
                     Text("Cancelar", color = TintaComic, fontWeight = FontWeight.Bold)
                 }
+            }
+        )
+    }
+
+    if (showEditDialog && selectedIngredient != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            modifier = Modifier.border(2.dp, TintaComic, RoundedCornerShape(16.dp)),
+            containerColor = FondoCrema,
+            title = {
+                Text(text = "Editar precio de ${selectedIngredient?.name}", fontWeight = FontWeight.Bold, color = TintaComic)
+            },
+            text = {
+                OutlinedTextField(
+                    value = editPriceText,
+                    onValueChange = { editPriceText = it },
+                    label = { Text("Nuevo precio en MXN") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    shape = RoundedCornerShape(8.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val current = selectedIngredient
+                        if (current != null) {
+                            val newPriceParsed = editPriceText.toDoubleOrNull() ?: current.price
+                            viewModel.saveIngredient(
+                                name = current.name,
+                                category = current.category,
+                                price = newPriceParsed,
+                                id = current.id
+                            )
+                            feedbackTitle = "ACTUALIZADO"
+                            feedbackMessage = "Se actualizó el precio de ${current.name}."
+                            feedbackType = MessageType.SUCCESS
+                        }
+                        showEditDialog = false
+                        selectedIngredient = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = VerdeFresco)
+                ) {
+                    Text("Actualizar", color = BlancoPuro, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancelar", color = TintaComic, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (showDeleteDialog && ingredientToDelete != null) {
+        ChefsitoConfirmDialog(
+            title = "¿Borrar ${ingredientToDelete?.name}?",
+            message = "También se eliminará su precio de tu despensa.",
+            confirmText = "Borrar",
+            dismissText = "Cancelar",
+            onConfirm = {
+                viewModel.removeIngredient(ingredientToDelete!!)
+                feedbackTitle = "ELIMINADO"
+                feedbackMessage = "${ingredientToDelete?.name} se borró de tu despensa."
+                feedbackType = MessageType.DELETE
+                showDeleteDialog = false
+                ingredientToDelete = null
+            },
+            onDismiss = {
+                showDeleteDialog = false
+                ingredientToDelete = null
             }
         )
     }

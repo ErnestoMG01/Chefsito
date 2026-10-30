@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Kitchen
@@ -14,7 +16,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chefsito.ui.theme.*
@@ -28,6 +33,8 @@ fun PlanScreen(
     var selectedBudget by remember { mutableStateOf("200") }
 
     val presetAmounts = listOf("50", "100", "150", "200")
+    val parsedBudget = selectedBudget.toIntOrNull()
+    val isBudgetValid = parsedBudget != null && parsedBudget > 0
 
     Column(
         modifier = modifier
@@ -162,7 +169,7 @@ fun PlanScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(2.dp, TintaComic, RoundedCornerShape(12.dp))
-                        .background(BlancoPuro)
+                        .background(BlancoPuro, RoundedCornerShape(12.dp))
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -173,13 +180,25 @@ fun PlanScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = selectedBudget,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TintaComic,
-                        modifier = Modifier.weight(1f)
+
+                    BasicTextField(
+                        value = selectedBudget,
+                        onValueChange = { newValue ->
+                            if (newValue.length <= 6 && newValue.all { it.isDigit() }) {
+                                selectedBudget = newValue
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        textStyle = TextStyle(
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TintaComic
+                        ),
+                        cursorBrush = SolidColor(TintaComic),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
                     )
+
                     Text(
                         text = "MXN",
                         fontSize = 14.sp,
@@ -218,6 +237,7 @@ fun PlanScreen(
 
                 Button(
                     onClick = { /* Generar plan */ },
+                    enabled = isBudgetValid,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
