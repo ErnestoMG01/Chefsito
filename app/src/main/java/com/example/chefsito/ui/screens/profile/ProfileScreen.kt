@@ -38,10 +38,11 @@ import java.io.File
 @Composable
 fun ProfileScreen(
     viewModel: ChefViewModel,
-    onNavigateHome: () -> Unit,
-    onNavigatePlan: () -> Unit,
-    onNavigateFavorites: () -> Unit,
-    onNavigateProfile: () -> Unit
+    onNavigateHome: () -> Unit = {},
+    onNavigatePlan: () -> Unit = {},
+    onNavigateFavorites: () -> Unit = {},
+    onNavigateProfile: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val imagePath by viewModel.profileImagePath.collectAsState()
@@ -356,7 +357,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedButton(
-                        onClick = onNavigateHome,
+                        onClick = onLogout,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)

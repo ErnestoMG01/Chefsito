@@ -1,10 +1,15 @@
 package com.example.chefsito
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
@@ -15,6 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.chefsito.ui.components.ChefsitoBottomBar
+import com.example.chefsito.ui.navigation.Routes
+import com.example.chefsito.ui.navigation.routesWithBottomBar
 import com.example.chefsito.ui.screens.auth.AuthScreen
 import com.example.chefsito.ui.screens.favorites.FavoritesScreen
 import com.example.chefsito.ui.screens.home.HomeScreen
@@ -39,15 +46,22 @@ class MainActivity : ComponentActivity() {
     private val chefViewModel: ChefViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Pantalla completa moderna: la app dibuja detrás de las barras del sistema
+        // y cada componente respeta los insets (gestos o 3 botones). Íconos oscuros
+        // porque el fondo de la app es claro.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
         super.onCreate(savedInstanceState)
         setContent {
             ChefsitoTheme {
                 val navController = rememberNavController()
 
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route ?: "home"
+                val currentRoute = navBackStackEntry?.destination?.route ?: Routes.HOME
 
-                val showBottomBar = currentRoute in listOf("home", "plan", "favorites", "profile", "pantry")
+                val showBottomBar = currentRoute in routesWithBottomBar
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -62,66 +76,69 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "splash",
-                        modifier = Modifier.padding(innerPadding)
+                        startDestination = Routes.SPLASH,
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .consumeWindowInsets(innerPadding)
+                            .imePadding() // el teclado no tapa los campos
                     ) {
-                        composable("splash") {
+                        composable(Routes.SPLASH) {
                             SplashScreen(
                                 onSplashFinished = {
-                                    navController.navigate("auth") {
-                                        popUpTo("splash") { inclusive = true }
+                                    navController.navigate(Routes.AUTH) {
+                                        popUpTo(Routes.SPLASH) { inclusive = true }
                                     }
                                 }
                             )
                         }
-                        composable("auth") {
+                        composable(Routes.AUTH) {
                             AuthScreen(
                                 onLoginSuccess = { _ ->
-                                    navController.navigate("home") {
-                                        popUpTo("auth") { inclusive = true }
+                                    navController.navigate(Routes.HOME) {
+                                        popUpTo(Routes.AUTH) { inclusive = true }
                                     }
                                 }
                             )
                         }
-                        composable("home") {
+                        composable(Routes.HOME) {
                             HomeScreen(
-                                onNavigateToBudget = { navController.goTo("plan") },
-                                onNavigateToPantry = { navController.goTo("pantry") },
-                                onNavigateToProfile = { navController.goTo("profile") }
+                                onNavigateToBudget = { navController.goTo(Routes.PLAN) },
+                                onNavigateToPantry = { navController.goTo(Routes.PANTRY) },
+                                onNavigateToProfile = { navController.goTo(Routes.PROFILE) }
                             )
                         }
-                        composable("plan") {
+                        composable(Routes.PLAN) {
                             PlanScreen(
                                 viewModel = chefViewModel,
-                                onNavigateHome = { navController.goTo("home") },
-                                onNavigatePantry = { navController.goTo("pantry") },
-                                onNavigateFavorites = { navController.goTo("favorites") },
-                                onNavigateProfile = { navController.goTo("profile") }
+                                onNavigateHome = { navController.goTo(Routes.HOME) },
+                                onNavigatePantry = { navController.goTo(Routes.PANTRY) },
+                                onNavigateFavorites = { navController.goTo(Routes.FAVORITES) },
+                                onNavigateProfile = { navController.goTo(Routes.PROFILE) }
                             )
                         }
-                        composable("favorites") {
+                        composable(Routes.FAVORITES) {
                             FavoritesScreen(
                                 onRecipeClick = { /* Detalle de receta */ }
                             )
                         }
-                        composable("profile") {
+                        composable(Routes.PROFILE) {
                             ProfileScreen(
                                 viewModel = chefViewModel,
-                                onNavigateHome = { navController.goTo("home") },
-                                onNavigatePlan = { navController.goTo("plan") },
-                                onNavigateFavorites = { navController.goTo("favorites") },
-                                onNavigateProfile = { navController.goTo("profile") },
+                                onNavigateHome = { navController.goTo(Routes.HOME) },
+                                onNavigatePlan = { navController.goTo(Routes.PLAN) },
+                                onNavigateFavorites = { navController.goTo(Routes.FAVORITES) },
+                                onNavigateProfile = { navController.goTo(Routes.PROFILE) },
                                 onLogout = {
-                                    navController.navigate("auth") {
+                                    navController.navigate(Routes.AUTH) {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 }
                             )
                         }
-                        composable("pantry") {
+                        composable(Routes.PANTRY) {
                             PantryScreen(
                                 viewModel = chefViewModel,
-                                onNavigatePlan = { navController.goTo("plan") }
+                                onNavigatePlan = { navController.goTo(Routes.PLAN) }
                             )
                         }
                     }
