@@ -77,7 +77,7 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun submitForm(onLoginSuccess: (String) -> Unit) {
+    fun submitForm(onLoginSuccess: (email: String, displayName: String) -> Unit) {
         val state = _uiState.value
         val emailTrimmed = state.email.trim()
 
@@ -122,7 +122,7 @@ class AuthViewModel : ViewModel() {
                     isAuthenticated = true
                 )
             }
-            onLoginSuccess(displayName)
+            onLoginSuccess(emailTrimmed, displayName)
 
         } else {
             // Validaciones Registro

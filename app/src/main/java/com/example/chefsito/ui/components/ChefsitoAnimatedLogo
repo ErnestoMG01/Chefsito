@@ -1,0 +1,193 @@
+package com.example.chefsito.ui.components
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.example.chefsito.ui.screens.auth.ChefHatIcon
+import com.example.chefsito.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+@Composable
+fun ChefsitoAnimatedLogo(
+    modifier: Modifier = Modifier,
+    size: Dp = 64.dp, // Tamaño por defecto pensado para el AuthScreen
+) {
+    val ratio = size.value / 148f // Escala proporcional basada en el HTML original
+
+    val infiniteTransition = rememberInfiniteTransition(label = "logo")
+
+    // Anillo girando
+    val ringRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1150,
+                easing = CubicBezierEasing(0.5f, 0f, 0.5f, 1f)
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "ringRotation"
+    )
+
+    // Plato "respirando"
+    val plateScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "plateScale"
+    )
+
+    // Chef balanceándose
+    val chefRotation by infiniteTransition.animateFloat(
+        initialValue = -4f,
+        targetValue = 4f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "chefRotation"
+    )
+
+    // Vapor
+    val steams = remember { List(3) { Animatable(0f) } }
+    LaunchedEffect(Unit) {
+        steams.forEachIndexed { index, anim ->
+            launch {
+                delay(index * 250L)
+                while (true) {
+                    anim.snapTo(0f)
+                    anim.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(durationMillis = 1600, easing = LinearEasing)
+                    )
+                }
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
+        // Vapor detrás del anillo
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val lineWidth = (5f * ratio).dp.toPx()
+            val corner = CornerRadius(lineWidth / 2f, lineWidth / 2f)
+            val lefts = listOf(44f, 74f, 104f).map { (it * ratio).dp.toPx() }
+            val baseHeights = listOf(14f, 18f, 14f).map { (it * ratio).dp.toPx() }
+            val topOffset = (-6f * ratio).dp.toPx()
+
+            steams.forEachIndexed { i, anim ->
+                val p = anim.value
+                if (p <= 0f) return@forEachIndexed
+
+                val translateY = ((4f - 20f * p) * ratio).dp.toPx()
+                val scaleY = 0.6f + 0.5f * p
+                val opacity = when {
+                    p < 0.35f -> 0.7f * (p / 0.35f)
+                    else -> 0.7f * (1f - (p - 0.35f) / 0.65f)
+                }.coerceIn(0f, 1f)
+
+                drawRoundRect(
+                    color = VerdeFresco.copy(alpha = opacity),
+                    topLeft = Offset(lefts[i], topOffset + translateY),
+                    size = Size(lineWidth, baseHeights[i] * scaleY),
+                    cornerRadius = corner
+                )
+            }
+        }
+
+        // Anillo giratorio (Naranja y Amarillo)
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .rotate(ringRotation)
+        ) {
+            val stroke = (6f * ratio).dp.toPx()
+            val radius = (this.size.minDimension - stroke) / 2f
+            val c = Offset(this.size.width / 2f, this.size.height / 2f)
+            val arcTopLeft = Offset(c.x - radius, c.y - radius)
+            val arcSize = Size(radius * 2, radius * 2)
+
+            // Fondo gris tenue
+            drawCircle(
+                color = TintaComic.copy(alpha = 0.08f),
+                radius = radius,
+                center = c,
+                style = Stroke(width = stroke)
+            )
+
+            // Arco Naranja
+            drawArc(
+                color = NaranjaCoral,
+                startAngle = -90f,
+                sweepAngle = 90f,
+                useCenter = false,
+                topLeft = arcTopLeft,
+                size = arcSize,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+
+            // Arco Amarillo
+            drawArc(
+                color = AmarilloMostaza,
+                startAngle = 0f,
+                sweepAngle = 90f,
+                useCenter = false,
+                topLeft = arcTopLeft,
+                size = arcSize,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+        }
+
+        // Plato blanco con el Chef dentro
+        Box(
+            modifier = Modifier
+                .size(78.dp * ratio)
+                .scale(plateScale)
+                .shadow((6f * ratio).dp, CircleShape)
+                .background(Color.White, CircleShape)
+                .border((3f * ratio).dp, TintaComic.copy(alpha = 0.08f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .rotate(chefRotation),
+                contentAlignment = Alignment.Center
+            ) {
+                ChefHatIcon(size = 47.dp * ratio)
+            }
+        }
+    }
+}

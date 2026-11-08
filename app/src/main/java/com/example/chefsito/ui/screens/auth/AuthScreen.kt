@@ -44,8 +44,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chefsito.ui.components.AuthLogoWebView
+
 import com.example.chefsito.ui.theme.*
 import com.example.chefsito.ui.viewmodel.AuthViewModel
+import com.example.chefsito.utils.SessionManager
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun ChefHatIcon(
@@ -56,12 +60,15 @@ fun ChefHatIcon(
         val w = this.size.width
         val h = this.size.height
 
+        // Desplazamiento vertical para centrar el gorro
+        val offsetY = h * 0.09f
+
         // Hat Puff Path
         val path = Path().apply {
-            moveTo(w * 0.25f, h * 0.60f)
-            cubicTo(w * 0.05f, h * 0.45f, w * 0.15f, h * 0.15f, w * 0.35f, h * 0.20f)
-            cubicTo(w * 0.40f, h * 0.02f, w * 0.60f, h * 0.02f, w * 0.65f, h * 0.20f)
-            cubicTo(w * 0.85f, h * 0.15f, w * 0.95f, h * 0.45f, w * 0.75f, h * 0.60f)
+            moveTo(w * 0.25f, h * 0.60f + offsetY)
+            cubicTo(w * 0.05f, h * 0.45f + offsetY, w * 0.15f, h * 0.15f + offsetY, w * 0.35f, h * 0.20f + offsetY)
+            cubicTo(w * 0.40f, h * 0.02f + offsetY, w * 0.60f, h * 0.02f + offsetY, w * 0.65f, h * 0.20f + offsetY)
+            cubicTo(w * 0.85f, h * 0.15f + offsetY, w * 0.95f, h * 0.45f + offsetY, w * 0.75f, h * 0.60f + offsetY)
             close()
         }
 
@@ -74,7 +81,7 @@ fun ChefHatIcon(
         val brimWidth = w * 0.54f
         val brimHeight = h * 0.22f
         val brimLeft = w * 0.23f
-        val brimTop = h * 0.58f
+        val brimTop = h * 0.58f + offsetY
 
         drawRoundRect(
             color = AmarilloMostaza,
@@ -113,6 +120,7 @@ fun AuthScreen(
     onLoginSuccess: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -147,23 +155,28 @@ fun AuthScreen(
                 )
             }
 
-            Column {
-                // Tarjeta del Logo de Chefsito
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // Caja blanca redondeada con el logo animado de HTML (logo_card.html)
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
-                        .border(2.5.dp, TintaComic, RoundedCornerShape(18.dp))
-                        .clip(RoundedCornerShape(18.dp))
+                        .size(76.dp)
+                        .border(2.5.dp, TintaComic, RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(BlancoPuro),
                     contentAlignment = Alignment.Center
                 ) {
-                    ChefHatIcon(size = 40.dp)
+                    AuthLogoWebView(
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "MiMenú",
+                    text = "Chefsito",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Black,
                     color = TintaComic
@@ -387,7 +400,12 @@ fun AuthScreen(
 
             // Botón Principal CTA
             Button(
-                onClick = { viewModel.submitForm(onLoginSuccess) },
+                onClick = {
+                    viewModel.submitForm { email, displayName ->
+                        SessionManager.saveSession(context, email, displayName)
+                        onLoginSuccess(displayName)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
