@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable(Routes.SPLASH) {
                             SplashScreen(
+                                navController = navController,
                                 onSplashFinished = {
                                     navController.navigate(Routes.AUTH) {
                                         popUpTo(Routes.SPLASH) { inclusive = true }
@@ -147,3 +148,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
