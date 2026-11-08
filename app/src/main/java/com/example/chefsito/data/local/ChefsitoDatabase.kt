@@ -12,6 +12,7 @@ import com.example.chefsito.data.local.entity.RecipeEntity
 abstract class ChefsitoDatabase : RoomDatabase() {
 
     abstract fun ingredientDao(): IngredientDao
+    abstract fun recipeDao(): com.example.chefsito.data.local.dao.RecipeDao
 
     companion object {
         @Volatile
