@@ -20,18 +20,21 @@ class RecipeViewModel(
 
     private val _isLoading = MutableStateFlow(false)
     private val _isGeneratingRecipe = MutableStateFlow(false)
+    private val _error = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<RecipeUiState> = combine(
         recipeRepository.getAllRecipes(),
         recipeRepository.getFavoriteRecipes(),
         _isLoading,
-        _isGeneratingRecipe
-    ) { allRecipes, favoriteRecipes, isLoading, isGenerating ->
+        _isGeneratingRecipe,
+        _error
+    ) { allRecipes, favoriteRecipes, isLoading, isGenerating, error ->
         RecipeUiState(
             recipes = allRecipes,
             favoriteRecipes = favoriteRecipes,
             isLoading = isLoading,
-            isGeneratingRecipe = isGenerating
+            isGeneratingRecipe = isGenerating,
+            error = error
         )
     }.stateIn(
         scope = viewModelScope,
@@ -60,10 +63,20 @@ class RecipeViewModel(
     fun generateAiRecipe() {
         viewModelScope.launch {
             _isGeneratingRecipe.value = true
-            aiRecipeRepository.generateAndSaveRecipeFromPantry()
-            // Se puede manejar el result para emitir un error a la UI
+            _error.value = null
+            
+            val result = aiRecipeRepository.generateAndSaveRecipeFromPantry()
+            
+            result.onFailure { exception ->
+                _error.value = exception.message ?: "Ocurrió un error al generar la receta"
+            }
+            
             _isGeneratingRecipe.value = false
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
 
