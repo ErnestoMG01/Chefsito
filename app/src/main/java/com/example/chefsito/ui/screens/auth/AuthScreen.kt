@@ -44,10 +44,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chefsito.ChefsitoApplication
 import com.example.chefsito.ui.components.AuthLogoWebView
 
 import com.example.chefsito.ui.theme.*
 import com.example.chefsito.ui.viewmodel.AuthViewModel
+import com.example.chefsito.ui.viewmodel.AuthViewModelFactory
 import com.example.chefsito.utils.SessionManager
 import androidx.compose.ui.platform.LocalContext
 
@@ -116,11 +118,21 @@ fun ChefHatIcon(
 @Composable
 fun AuthScreen(
     modifier: Modifier = Modifier,
-    viewModel: AuthViewModel = viewModel(),
     onLoginSuccess: (String) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val application = context.applicationContext as ChefsitoApplication
+    val viewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(application.authRepository)
+    )
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Cuando Room confirma el login/registro, persistimos la sesión y navegamos.
+    LaunchedEffect(uiState.authenticatedUser) {
+        val user = uiState.authenticatedUser ?: return@LaunchedEffect
+        SessionManager.saveSession(context, user.id, user.name, user.email)
+        onLoginSuccess(user.name)
+    }
 
     Column(
         modifier = modifier
@@ -268,33 +280,85 @@ fun AuthScreen(
             }
 
             // Campo Correo Electrónico
-            ChefsitoCustomField(
-                label = "CORREO ELECTRÓNICO",
-                value = uiState.email,
-                onValueChange = { viewModel.onEmailChange(it) },
-                placeholder = "tu@correo.com",
-                icon = Icons.Default.Email,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
+            Column {
+                ChefsitoCustomField(
+                    label = "CORREO ELECTRÓNICO",
+                    value = uiState.email,
+                    onValueChange = { viewModel.onEmailChange(it) },
+                    placeholder = "tu@correo.com",
+                    icon = Icons.Default.Email,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    )
                 )
-            )
+                if (uiState.emailError != null) {
+                    Text(
+                        text = uiState.emailError!!,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+            }
 
             // Campo Contraseña
-            ChefsitoCustomField(
-                label = "CONTRASEÑA",
-                value = uiState.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
-                placeholder = "••••••••",
-                icon = Icons.Default.Lock,
-                isPassword = true,
-                isPasswordVisible = uiState.isPasswordVisible,
-                onTogglePasswordVisibility = { viewModel.togglePasswordVisibility() },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
+            Column {
+                ChefsitoCustomField(
+                    label = "CONTRASEÑA",
+                    value = uiState.password,
+                    onValueChange = { viewModel.onPasswordChange(it) },
+                    placeholder = "••••••••",
+                    icon = Icons.Default.Lock,
+                    isPassword = true,
+                    isPasswordVisible = uiState.isPasswordVisible,
+                    onTogglePasswordVisibility = { viewModel.togglePasswordVisibility() },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = if (uiState.isLoginMode) ImeAction.Done else ImeAction.Next
+                    )
                 )
-            )
+                if (uiState.passwordError != null) {
+                    Text(
+                        text = uiState.passwordError!!,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+            }
+
+            // Campo Confirmar Contraseña (solo en modo Registro)
+            AnimatedVisibility(
+                visible = !uiState.isLoginMode,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Column {
+                    ChefsitoCustomField(
+                        label = "CONFIRMAR CONTRASEÑA",
+                        value = uiState.confirmPassword,
+                        onValueChange = { viewModel.onConfirmPasswordChange(it) },
+                        placeholder = "••••••••",
+                        icon = Icons.Default.Lock,
+                        isPassword = true,
+                        isPasswordVisible = uiState.isConfirmPasswordVisible,
+                        onTogglePasswordVisibility = { viewModel.toggleConfirmPasswordVisibility() },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        )
+                    )
+                    if (uiState.confirmPasswordError != null) {
+                        Text(
+                            text = uiState.confirmPasswordError!!,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+                }
+            }
 
             // Link "¿Olvidaste tu contraseña?" (solo en Iniciar sesión)
             if (uiState.isLoginMode) {
@@ -400,12 +464,8 @@ fun AuthScreen(
 
             // Botón Principal CTA
             Button(
-                onClick = {
-                    viewModel.submitForm { email, displayName ->
-                        SessionManager.saveSession(context, email, displayName)
-                        onLoginSuccess(displayName)
-                    }
-                },
+                onClick = { viewModel.submitForm() },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -417,8 +477,20 @@ fun AuthScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = BlancoPuro,
+                            strokeWidth = 3.dp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
                     Text(
-                        text = if (uiState.isLoginMode) "Entrar  →" else "Crear cuenta  →",
+                        text = when {
+                            uiState.isLoading -> "Procesando..."
+                            uiState.isLoginMode -> "Entrar  →"
+                            else -> "Crear cuenta  →"
+                        },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         color = BlancoPuro
@@ -534,10 +606,3 @@ fun ChefsitoCustomField(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AuthScreenPreview() {
-    ChefsitoTheme {
-        AuthScreen()
-    }
-}

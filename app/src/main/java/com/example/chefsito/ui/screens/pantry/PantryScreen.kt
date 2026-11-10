@@ -35,6 +35,12 @@ fun PantryScreen(
     onNavigatePlan: () -> Unit = {},
 ) {
     val pantryIngredients by viewModel.pantryIngredients.collectAsState()
+    val currentBudget by viewModel.userBudget.collectAsState()
+
+    var budgetText by remember { mutableStateOf(currentBudget.toInt().toString()) }
+    LaunchedEffect(currentBudget) {
+        budgetText = currentBudget.toInt().toString()
+    }
 
     // Estados locales para el diálogo de agregar insumo
     var showAddDialog by remember { mutableStateOf(false) }
@@ -63,7 +69,7 @@ fun PantryScreen(
         }
     }
 
-    val totalPrice = pantryIngredients.sumOf { it.price }
+    val totalPrice = pantryIngredients.sumOf { it.userCost }
 
     Column(
         modifier = modifier
@@ -101,7 +107,7 @@ fun PantryScreen(
                     color = TintaComic
                 )
                 Text(
-                    text = "Marca lo que tienes y anota su precio",
+                    text = "Anota cuánto pagaste por cada ingrediente que tienes",
                     fontSize = 12.sp,
                     color = TintaComic.copy(alpha = 0.7f)
                 )
@@ -138,7 +144,7 @@ fun PantryScreen(
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "Valor total",
+                                text = "Costo de tu despensa",
                                 fontSize = 12.sp,
                                 color = TintaComic.copy(alpha = 0.6f)
                             )
@@ -149,6 +155,49 @@ fun PantryScreen(
                                 color = VerdeFresco
                             )
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Presupuesto objetivo del usuario (se comparte con Planificar).
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(2.dp, TintaComic, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = BlancoPuro)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = "PRESUPUESTO OBJETIVO",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TintaComic.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = budgetText,
+                            onValueChange = { value ->
+                                if (value.all { it.isDigit() }) {
+                                    budgetText = value
+                                    viewModel.updateBudget(value.toDoubleOrNull() ?: 0.0)
+                                }
+                            },
+                            label = { Text("¿Cuánto quieres gastar? (MXN)") },
+                            leadingIcon = {
+                                Text(
+                                    text = "$",
+                                    fontWeight = FontWeight.Bold,
+                                    color = VerdeFresco,
+                                    fontSize = 18.sp
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
 
@@ -201,7 +250,9 @@ fun PantryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
                         ) {
                             Text(
                                 text = ingredient.name,
@@ -215,23 +266,25 @@ fun PantryScreen(
                                 color = NaranjaCoral,
                                 fontWeight = FontWeight.Bold
                             )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "$${ingredient.price.toInt()} MXN",
+                                text = "$${ingredient.userCost.toInt()} MXN",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = VerdeFresco,
                                 modifier = Modifier.clickable {
                                     selectedIngredient = ingredient
-                                    editPriceText = ingredient.price.toString()
+                                    editPriceText = ingredient.userCost.toString()
                                     showEditDialog = true
                                 }
                             )
-
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Botón compacto de edición: no compite con el texto
+                            // porque el bloque izquierdo ya usa weight(1f).
                             Box(
                                 modifier = Modifier
                                     .size(32.dp)
@@ -240,7 +293,7 @@ fun PantryScreen(
                                     .background(FondoCrema)
                                     .clickable {
                                         selectedIngredient = ingredient
-                                        editPriceText = ingredient.price.toString()
+                                        editPriceText = ingredient.userCost.toString()
                                         showEditDialog = true
                                     },
                                 contentAlignment = Alignment.Center
@@ -301,7 +354,7 @@ fun PantryScreen(
                     OutlinedTextField(
                         value = newPrice,
                         onValueChange = { newPrice = it },
-                        label = { Text("Precio en MXN") },
+                        label = { Text("¿Cuánto pagaste? (MXN)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp)
@@ -359,13 +412,13 @@ fun PantryScreen(
             modifier = Modifier.border(2.dp, TintaComic, RoundedCornerShape(16.dp)),
             containerColor = FondoCrema,
             title = {
-                Text(text = "Editar precio de ${selectedIngredient?.name}", fontWeight = FontWeight.Bold, color = TintaComic)
+                Text(text = "Editar costo de ${selectedIngredient?.name}", fontWeight = FontWeight.Bold, color = TintaComic)
             },
             text = {
                 OutlinedTextField(
                     value = editPriceText,
                     onValueChange = { editPriceText = it },
-                    label = { Text("Nuevo precio en MXN") },
+                    label = { Text("¿Cuánto pagaste? (MXN)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     shape = RoundedCornerShape(8.dp)
@@ -376,15 +429,15 @@ fun PantryScreen(
                     onClick = {
                         val current = selectedIngredient
                         if (current != null) {
-                            val newPriceParsed = editPriceText.toDoubleOrNull() ?: current.price
+                            val newPriceParsed = editPriceText.toDoubleOrNull() ?: current.userCost
                             viewModel.saveIngredient(
                                 name = current.name,
                                 category = current.category,
-                                price = newPriceParsed,
+                                userCost = newPriceParsed,
                                 id = current.id
                             )
                             feedbackTitle = "ACTUALIZADO"
-                            feedbackMessage = "Se actualizó el precio de ${current.name}."
+                            feedbackMessage = "Se actualizó el costo de ${current.name}."
                             feedbackType = MessageType.SUCCESS
                         }
                         showEditDialog = false

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -28,9 +29,16 @@ import com.example.chefsito.ui.screens.home.HomeScreen
 import com.example.chefsito.ui.screens.pantry.PantryScreen
 import com.example.chefsito.ui.screens.plan.PlanScreen
 import com.example.chefsito.ui.screens.profile.ProfileScreen
+import com.example.chefsito.ui.screens.recipe.RecipeDetailScreen
 import com.example.chefsito.ui.screens.splash.SplashScreen
 import com.example.chefsito.ui.theme.ChefsitoTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.chefsito.ui.recipe.RecipeViewModel
+import com.example.chefsito.ui.recipe.RecipeViewModelFactory
+import com.example.chefsito.ChefsitoApplication
 import com.example.chefsito.ui.viewmodel.ChefViewModel
+import com.example.chefsito.ui.viewmodel.CommunityViewModel
 
 private fun NavHostController.goTo(route: String) {
     navigate(route) {
@@ -55,6 +63,20 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         setContent {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val application = context.applicationContext as ChefsitoApplication
+            
+            // Instanciar RecipeViewModel a nivel global para compartirlo
+            val recipeViewModel: RecipeViewModel = viewModel(
+                factory = RecipeViewModelFactory(
+                    recipeRepository = application.recipeRepository,
+                    ingredientRepository = application.ingredientRepository
+                )
+            )
+
+            // ViewModel de la sección "Recetas de la Comunidad" (API externa).
+            val communityViewModel: CommunityViewModel = viewModel()
+            
             ChefsitoTheme {
                 val navController = rememberNavController()
 
@@ -102,7 +124,14 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Routes.HOME) {
+                            val communityState by communityViewModel.uiState
+                                .collectAsStateWithLifecycle()
+                            val profileImagePath by chefViewModel.profileImagePath.collectAsState()
+
                             HomeScreen(
+                                profileImagePath = profileImagePath,
+                                communityState = communityState,
+                                onRetryCommunity = { communityViewModel.retry() },
                                 onNavigateToBudget = { navController.goTo(Routes.PLAN) },
                                 onNavigateToPantry = { navController.goTo(Routes.PANTRY) },
                                 onNavigateToProfile = { navController.goTo(Routes.PROFILE) }
@@ -111,16 +140,52 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.PLAN) {
                             PlanScreen(
                                 viewModel = chefViewModel,
+                                recipeViewModel = recipeViewModel,
                                 onNavigateHome = { navController.goTo(Routes.HOME) },
                                 onNavigatePantry = { navController.goTo(Routes.PANTRY) },
                                 onNavigateFavorites = { navController.goTo(Routes.FAVORITES) },
-                                onNavigateProfile = { navController.goTo(Routes.PROFILE) }
+                                onNavigateProfile = { navController.goTo(Routes.PROFILE) },
+                                onNavigateRecipe = { recipeId ->
+                                    navController.navigate(Routes.recipeDetail(recipeId))
+                                },
+                                onToggleFavorite = { recipeId ->
+                                    recipeViewModel.toggleFavorite(recipeId)
+                                }
                             )
                         }
                         composable(Routes.FAVORITES) {
+                            val uiState by recipeViewModel.uiState.collectAsStateWithLifecycle()
+
+                            // Solo recetas marcadas con el corazón (isFavorite = 1).
                             FavoritesScreen(
-                                onRecipeClick = { /* Detalle de receta */ }
+                                recipes = uiState.favoriteRecipes,
+                                onToggleFavorite = { recipe ->
+                                    recipeViewModel.updateRecipe(
+                                        recipe.copy(isFavorite = !recipe.isFavorite)
+                                    )
+                                },
+                                onNavigateRecipe = { recipeId ->
+                                    navController.navigate(Routes.recipeDetail(recipeId))
+                                }
                             )
+                        }
+                        composable(Routes.RECIPE_DETAIL) { backStackEntry ->
+                            val recipeId = backStackEntry.arguments
+                                ?.getString("recipeId")
+                                ?.toLongOrNull() ?: 0L
+                            val uiState by recipeViewModel.uiState.collectAsStateWithLifecycle()
+                            val pantry by chefViewModel.pantryIngredients.collectAsState()
+                            val budget by chefViewModel.userBudget.collectAsState()
+
+                            val recipe = uiState.recipes.find { it.id == recipeId }
+                            if (recipe != null) {
+                                RecipeDetailScreen(
+                                    recipe = recipe,
+                                    pantry = pantry,
+                                    budget = budget,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                         composable(Routes.PROFILE) {
                             ProfileScreen(
@@ -130,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateFavorites = { navController.goTo(Routes.FAVORITES) },
                                 onNavigateProfile = { navController.goTo(Routes.PROFILE) },
                                 onLogout = {
+                                    com.example.chefsito.utils.SessionManager.logout(context)
                                     navController.navigate(Routes.AUTH) {
                                         popUpTo(0) { inclusive = true }
                                     }

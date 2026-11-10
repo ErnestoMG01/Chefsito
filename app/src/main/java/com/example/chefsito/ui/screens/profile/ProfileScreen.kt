@@ -33,6 +33,7 @@ import com.example.chefsito.ui.components.ChefsitoMessageBanner
 import com.example.chefsito.ui.components.MessageType
 import com.example.chefsito.ui.theme.*
 import com.example.chefsito.ui.viewmodel.ChefViewModel
+import com.example.chefsito.utils.SessionManager
 import java.io.File
 
 @Composable
@@ -52,8 +53,11 @@ fun ProfileScreen(
     val savedEmail by viewModel.profileEmail.collectAsState()
     val savedPhone by viewModel.profilePhone.collectAsState()
 
-    var name by remember { mutableStateOf(savedName) }
-    var email by remember { mutableStateOf(savedEmail) }
+    val sessionName = remember { SessionManager.getUserName(context) ?: "" }
+    val sessionEmail = remember { SessionManager.getUserEmail(context) ?: "" }
+
+    var name by remember { mutableStateOf(savedName.ifBlank { sessionName }) }
+    var email by remember { mutableStateOf(savedEmail.ifBlank { sessionEmail }) }
     var phone by remember { mutableStateOf(savedPhone) }
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }

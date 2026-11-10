@@ -5,14 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.chefsito.data.local.dao.IngredientDao
+import com.example.chefsito.data.local.dao.RecipeDao
+import com.example.chefsito.data.local.dao.UserDao
 import com.example.chefsito.data.local.entity.IngredientEntity
 import com.example.chefsito.data.local.entity.RecipeEntity
+import com.example.chefsito.data.local.entity.UserEntity
 
-@Database(entities = [IngredientEntity::class, RecipeEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [IngredientEntity::class, RecipeEntity::class, UserEntity::class],
+    version = 4,
+    exportSchema = false
+)
 abstract class ChefsitoDatabase : RoomDatabase() {
 
     abstract fun ingredientDao(): IngredientDao
-    abstract fun recipeDao(): com.example.chefsito.data.local.dao.RecipeDao
+    abstract fun recipeDao(): RecipeDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile
@@ -24,7 +32,11 @@ abstract class ChefsitoDatabase : RoomDatabase() {
                     context.applicationContext,
                     ChefsitoDatabase::class.java,
                     "chefsito_database"
-                ).build()
+                )
+                    // Entrega inmediata: si cambia el schema se recrea la BD en lugar
+                    // de lanzar una excepción de migración.
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

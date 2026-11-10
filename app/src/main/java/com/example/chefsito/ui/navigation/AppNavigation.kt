@@ -20,6 +20,9 @@ object Routes {
     const val FAVORITES = "favorites"
     const val PROFILE = "profile"
     const val PANTRY = "pantry"
+    const val RECIPE_DETAIL = "recipe/{recipeId}"
+
+    fun recipeDetail(recipeId: Long): String = "recipe/$recipeId"
 }
 
 /** Un destino de la barra inferior. */

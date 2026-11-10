@@ -14,32 +14,31 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.chefsito.data.local.entity.RecipeEntity
 import com.example.chefsito.ui.theme.*
 
-data class SavedRecipe(
-    val id: String,
-    val title: String,
-    val price: String,
-    val time: String,
-    val isFavorite: Boolean = true,
-)
-
+/**
+ * Pantalla de Favoritos.
+ *
+ * Recibe EXCLUSIVAMENTE las recetas con `isFavorite = 1`. Lo que se genera en
+ * Planificar no aparece aquí hasta que el usuario pulse el corazón.
+ */
 @Composable
 fun FavoritesScreen(
-    modifier: Modifier = Modifier,
-    onRecipeClick: (String) -> Unit = {},
+    recipes: List<RecipeEntity>,
+    onToggleFavorite: (RecipeEntity) -> Unit,
+    onNavigateRecipe: (Long) -> Unit
 ) {
-    var savedRecipes by remember { mutableStateOf(emptyList<SavedRecipe>()) }
-
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(FondoCrema)
     ) {
@@ -51,21 +50,20 @@ fun FavoritesScreen(
         ) {
             item {
                 Text(
-                    text = "Recetas Guardadas",
+                    text = "Mis Favoritos",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = TintaComic
                 )
                 Text(
-                    text = "${savedRecipes.size} recetas guardadas",
+                    text = "${recipes.size} receta(s) guardada(s)",
                     fontSize = 12.sp,
                     color = TintaComic.copy(alpha = 0.7f)
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            if (savedRecipes.isEmpty()) {
+            if (recipes.isEmpty()) {
                 item {
                     Card(
                         modifier = Modifier
@@ -90,14 +88,14 @@ fun FavoritesScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Aún no tienes recetas guardadas",
+                                text = "Aún no tienes recetas favoritas",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TintaComic
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Tus recetas favoritas aparecerán aquí.",
+                                text = "En Planificar pulsa el corazón de una receta para guardarla aquí.",
                                 fontSize = 12.sp,
                                 color = TintaComic.copy(alpha = 0.6f)
                             )
@@ -105,7 +103,7 @@ fun FavoritesScreen(
                     }
                 }
             } else {
-                items(savedRecipes, key = { it.id }) { recipe ->
+                items(recipes, key = { it.id }) { recipe ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -122,52 +120,37 @@ fun FavoritesScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(80.dp)
+                                    .size(72.dp)
                                     .border(2.dp, TintaComic, CircleShape)
                                     .clip(CircleShape)
-                                    .background(AmarilloMostaza),
+                                    .background(mealColor(recipe.mealType)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Restaurant,
                                     contentDescription = recipe.title,
-                                    tint = TintaComic,
-                                    modifier = Modifier.size(36.dp)
+                                    tint = if (recipe.mealType == "Desayuno") TintaComic else BlancoPuro,
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = recipe.title,
-                                    fontSize = 16.sp,
+                                    fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TintaComic
                                 )
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
 
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .border(1.5.dp, TintaComic, RoundedCornerShape(20.dp))
-                                            .background(VerdeFresco)
-                                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                                    ) {
-                                        Text(
-                                            text = recipe.price,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = BlancoPuro
-                                        )
-                                    }
-
+                                    MealBadge(recipe.mealType)
                                     Box(
                                         modifier = Modifier
                                             .border(1.5.dp, TintaComic, RoundedCornerShape(20.dp))
@@ -183,7 +166,7 @@ fun FavoritesScreen(
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = recipe.time,
+                                                text = "${recipe.prepTimeMinutes} min",
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = TintaComic
@@ -192,10 +175,19 @@ fun FavoritesScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "$${recipe.estimatedPrice.toInt()} estimado",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = VerdeFresco
+                                )
+
+                                Spacer(modifier = Modifier.height(2.dp))
 
                                 TextButton(
-                                    onClick = { onRecipeClick(recipe.id) },
+                                    onClick = { onNavigateRecipe(recipe.id) },
                                     contentPadding = PaddingValues(0.dp),
                                     modifier = Modifier.height(24.dp)
                                 ) {
@@ -218,19 +210,17 @@ fun FavoritesScreen(
                             }
 
                             IconButton(
-                                onClick = {
-                                    savedRecipes = savedRecipes.filter { it.id != recipe.id }
-                                },
+                                onClick = { onToggleFavorite(recipe) },
                                 modifier = Modifier
                                     .size(40.dp)
                                     .border(2.dp, TintaComic, CircleShape)
                                     .clip(CircleShape)
-                                    .background(NaranjaCoral)
+                                    .background(if (recipe.isFavorite) NaranjaCoral else BlancoPuro)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Favorite,
+                                    imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
                                     contentDescription = "Quitar de favoritos",
-                                    tint = BlancoPuro,
+                                    tint = if (recipe.isFavorite) BlancoPuro else TintaComic,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -240,4 +230,28 @@ fun FavoritesScreen(
             }
         }
     }
+}
+
+@Composable
+private fun MealBadge(mealType: String) {
+    Box(
+        modifier = Modifier
+            .border(1.5.dp, TintaComic, RoundedCornerShape(20.dp))
+            .background(mealColor(mealType))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+    ) {
+        Text(
+            text = mealType,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            color = if (mealType == "Desayuno") TintaComic else BlancoPuro
+        )
+    }
+}
+
+private fun mealColor(mealType: String): Color = when (mealType) {
+    "Desayuno" -> AmarilloMostaza
+    "Comida" -> NaranjaCoral
+    "Cena" -> VerdeFresco
+    else -> TintaComic
 }
