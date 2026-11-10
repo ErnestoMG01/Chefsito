@@ -3,8 +3,10 @@ package com.example.chefsito.ui.screens.plan
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +15,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,10 +31,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chefsito.data.domain.RecipeCostBreakdown
+import com.example.chefsito.ui.recipe.DayPlan
+import com.example.chefsito.ui.recipe.RecipeUiState
 import com.example.chefsito.ui.recipe.RecipeViewModel
 import com.example.chefsito.ui.theme.*
 import com.example.chefsito.ui.viewmodel.ChefViewModel
@@ -64,7 +70,6 @@ fun PlanScreen(
 
     var budgetText by remember { mutableStateOf(currentBudget.toInt().toString()) }
     var selectedTab by remember { mutableStateOf("Día") }
-    var selectedDay by remember { mutableStateOf(todayName()) }
     val context = LocalContext.current
 
     LaunchedEffect(currentBudget) {
@@ -92,7 +97,7 @@ fun PlanScreen(
             color = TintaComic
         )
         Text(
-            text = if (selectedTab == "Semanal") {
+            text = if (selectedTab == "Semana") {
                 "Presupuesto semanal repartido entre 7 días"
             } else {
                 "Plan del día · Desayuno, Comida y Cena"
@@ -130,7 +135,12 @@ fun PlanScreen(
                             .background(VerdeFresco, RoundedCornerShape(8.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "🛒", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Despensa",
+                            tint = BlancoPuro,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -164,46 +174,7 @@ fun PlanScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "¿QUÉ DÍA QUIERES PLANEAR?",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = TintaComic.copy(alpha = 0.7f)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            weekDays.forEach { day ->
-                val isSelected = selectedDay == day
-                Button(
-                    onClick = { selectedDay = day },
-                    modifier = Modifier
-                        .height(40.dp)
-                        .border(2.dp, TintaComic, RoundedCornerShape(10.dp)),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) NaranjaCoral else BlancoPuro
-                    ),
-                    contentPadding = PaddingValues(horizontal = 14.dp)
-                ) {
-                    Text(
-                        text = day,
-                        color = if (isSelected) BlancoPuro else TintaComic,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "¿TIPO DE PLAN?",
+            text = "TIPO DE PLAN",
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = TintaComic.copy(alpha = 0.7f)
@@ -214,7 +185,7 @@ fun PlanScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf("Día", "Semanal").forEach { tab ->
+            listOf("Día", "Semana").forEach { tab ->
                 val isSelected = selectedTab == tab
                 Button(
                     onClick = { selectedTab = tab },
@@ -241,7 +212,7 @@ fun PlanScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = if (selectedTab == "Semanal") "PRESUPUESTO SEMANAL" else "PRESUPUESTO DEL DÍA",
+            text = if (selectedTab == "Semana") "PRESUPUESTO SEMANAL" else "PRESUPUESTO DEL DÍA",
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = TintaComic.copy(alpha = 0.7f)
@@ -333,7 +304,7 @@ fun PlanScreen(
                 recipeViewModel.generateRecipe(
                     budget = budget,
                     planType = selectedTab,
-                    dayOfWeek = selectedDay
+                    dayOfWeek = if (selectedTab == "Día") todayName() else null
                 )
             },
             modifier = Modifier
@@ -359,7 +330,7 @@ fun PlanScreen(
                 )
             } else {
                 Text(
-                    text = "Generar plan de $selectedDay →",
+                    text = if (selectedTab == "Semana") "Generar plan semanal" else "Generar plan del día",
                     color = BlancoPuro,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
@@ -377,31 +348,174 @@ fun PlanScreen(
             )
         }
 
-        val recommendations = recipeUiState.recommendations
-        if (recommendations.isNotEmpty()) {
+        if (selectedTab == "Semana" &&
+            recipeUiState.planType == "Semana" &&
+            recipeUiState.weeklyPlans.isNotEmpty()
+        ) {
             Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "PLAN DE ${recipeUiState.selectedDay.uppercase()}",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = TintaComic.copy(alpha = 0.7f)
+            WeeklyPlanSection(
+                plans = recipeUiState.weeklyPlans,
+                onOpenRecipe = onNavigateRecipe
             )
-            Spacer(modifier = Modifier.height(8.dp))
+        } else if (selectedTab == "Día" &&
+            recipeUiState.planType == "Día" &&
+            recipeUiState.mealOptions.isNotEmpty()
+        ) {
+            Spacer(modifier = Modifier.height(20.dp))
+            DayOptionsSection(
+                uiState = recipeUiState,
+                onToggleFavorite = onToggleFavorite,
+                onOpenRecipe = onNavigateRecipe
+            )
+        }
+    }
+}
 
-            recommendations.forEach { breakdown ->
-                val currentRecipe = recipeUiState.recipes
+@Composable
+private fun DayOptionsSection(
+    uiState: RecipeUiState,
+    onToggleFavorite: (Long) -> Unit,
+    onOpenRecipe: (Long) -> Unit
+) {
+    Text(
+        text = "OPCIONES PARA HOY · ${uiState.selectedDay.uppercase()}",
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = TintaComic.copy(alpha = 0.7f)
+    )
+    Text(
+        text = "Elige la alternativa que más se te antoje.",
+        fontSize = 11.sp,
+        color = TintaComic.copy(alpha = 0.6f)
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+
+    uiState.mealOptions.forEach { group ->
+        MealSectionHeader(mealType = group.mealType)
+        Spacer(modifier = Modifier.height(6.dp))
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = 4.dp)
+        ) {
+            items(group.options, key = { it.recipe.id }) { breakdown ->
+                val currentRecipe = uiState.recipes
                     .find { it.id == breakdown.recipe.id }
                     ?: breakdown.recipe
 
-                MealSectionHeader(mealType = breakdown.recipe.mealType)
-                Spacer(modifier = Modifier.height(6.dp))
                 RecommendationCard(
                     breakdown = breakdown,
                     isFavorite = currentRecipe.isFavorite,
                     onToggleFavorite = { onToggleFavorite(currentRecipe.id) },
-                    onOpenRecipe = { onNavigateRecipe(currentRecipe.id) }
+                    onOpenRecipe = { onOpenRecipe(currentRecipe.id) },
+                    modifier = Modifier.width(292.dp)
                 )
-                Spacer(modifier = Modifier.height(14.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+    }
+}
+
+@Composable
+private fun WeeklyPlanSection(
+    plans: List<DayPlan>,
+    onOpenRecipe: (Long) -> Unit
+) {
+    Text(
+        text = "PLANEACIÓN SEMANAL",
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = TintaComic.copy(alpha = 0.7f)
+    )
+    Text(
+        text = "Toca cualquier comida para ver la receta completa.",
+        fontSize = 11.sp,
+        color = TintaComic.copy(alpha = 0.6f)
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+
+    plans.forEach { day ->
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .border(2.dp, TintaComic, RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = BlancoPuro)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = day.dayOfWeek,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TintaComic
+                    )
+                    Text(
+                        text = "$${day.estimatedCost.toInt()} estimado",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = VerdeFresco
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (day.options.isEmpty()) {
+                    Text(
+                        text = "Sin opciones para este día.",
+                        fontSize = 11.sp,
+                        color = TintaComic.copy(alpha = 0.6f)
+                    )
+                } else {
+                    day.options.forEach { group ->
+                        val best = group.options.firstOrNull() ?: return@forEach
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onOpenRecipe(best.recipe.id) }
+                                .padding(vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = mealEmoji(group.mealType), fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = group.mealType.uppercase(),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TintaComic.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = best.recipe.title,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TintaComic,
+                                    maxLines = 1
+                                )
+                            }
+                            Text(
+                                text = "$${best.totalCost.toInt()}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (best.fitsBudget) VerdeFresco else NaranjaCoral
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "Ver receta",
+                                tint = NaranjaCoral,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -417,7 +531,7 @@ private fun MealSectionHeader(mealType: String) {
                 .padding(horizontal = 10.dp, vertical = 3.dp)
         ) {
             Text(
-                text = mealType.uppercase(),
+                text = "${mealEmoji(mealType)} ${mealType.uppercase()}",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Black,
                 color = if (mealType == "Desayuno") TintaComic else BlancoPuro
@@ -438,12 +552,12 @@ private fun RecommendationCard(
     breakdown: RecipeCostBreakdown,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onOpenRecipe: () -> Unit
+    onOpenRecipe: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val recipe = breakdown.recipe
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .border(2.dp, TintaComic, RoundedCornerShape(14.dp)),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = BlancoPuro)
@@ -531,16 +645,25 @@ private fun RecommendationCard(
                     )
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
-                Text(
-                    text = if (breakdown.fitsBudget) {
-                        "✓ Dentro de tu presupuesto de $${breakdown.budget.toInt()}"
-                    } else {
-                        "⚠ Te pasas por $${(-breakdown.remainingBudget).toInt()} de tu presupuesto"
-                    },
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (breakdown.fitsBudget) VerdeFresco else NaranjaCoral
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (breakdown.fitsBudget) Icons.Default.CheckCircle else Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = if (breakdown.fitsBudget) VerdeFresco else NaranjaCoral,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = if (breakdown.fitsBudget) {
+                            "Dentro de tu presupuesto de $${breakdown.budget.toInt()}"
+                        } else {
+                            "Te pasas por $${(-breakdown.remainingBudget).toInt()} de tu presupuesto"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (breakdown.fitsBudget) VerdeFresco else NaranjaCoral
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -612,6 +735,13 @@ private fun BadgePill(text: String, color: Color) {
             color = if (color == BlancoPuro || color == AmarilloMostaza) TintaComic else BlancoPuro
         )
     }
+}
+
+private fun mealEmoji(mealType: String): String = when (mealType) {
+    "Desayuno" -> "🍳"
+    "Comida" -> "🍲"
+    "Cena" -> "🌙"
+    else -> ""
 }
 
 private fun mealColor(mealType: String): Color = when (mealType) {

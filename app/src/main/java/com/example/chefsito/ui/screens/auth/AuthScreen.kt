@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -488,13 +489,22 @@ fun AuthScreen(
                     Text(
                         text = when {
                             uiState.isLoading -> "Procesando..."
-                            uiState.isLoginMode -> "Entrar  →"
-                            else -> "Crear cuenta  →"
+                            uiState.isLoginMode -> "Entrar"
+                            else -> "Crear cuenta"
                         },
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         color = BlancoPuro
                     )
+                    if (!uiState.isLoading) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = BlancoPuro,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

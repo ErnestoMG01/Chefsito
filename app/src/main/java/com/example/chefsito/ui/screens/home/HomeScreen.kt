@@ -13,8 +13,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -46,6 +49,7 @@ fun HomeScreen(
     profileImagePath: String? = null,
     communityState: CommunityUiState = CommunityUiState.Loading,
     onRetryCommunity: () -> Unit = {},
+    onOpenCommunityRecipe: (CommunityRecipe) -> Unit = {},
     onNavigateToBudget: () -> Unit = {},
     onNavigateToPantry: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
@@ -262,7 +266,8 @@ fun HomeScreen(
 
         CommunitySection(
             state = communityState,
-            onRetry = onRetryCommunity
+            onRetry = onRetryCommunity,
+            onOpenRecipe = onOpenCommunityRecipe
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -272,14 +277,24 @@ fun HomeScreen(
 @Composable
 private fun CommunitySection(
     state: CommunityUiState,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onOpenRecipe: (CommunityRecipe) -> Unit
 ) {
-    Text(
-        text = "🌐 Recetas de la Comunidad (Conectado vía API)",
-        fontSize = 15.sp,
-        fontWeight = FontWeight.Bold,
-        color = TintaComic
-    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Default.Public,
+            contentDescription = null,
+            tint = NaranjaCoral,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = "Recetas Inspiradoras de la Red",
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = TintaComic
+        )
+    }
     Text(
         text = when (state) {
             is CommunityUiState.Loading -> "Consultando dummyjson.com…"
@@ -314,7 +329,7 @@ private fun CommunitySection(
                         color = NaranjaCoral
                     )
                     Text(
-                        text = "Cargando recetas de la comunidad…",
+                        text = "Cargando recetas de la red…",
                         fontSize = 12.sp,
                         color = TintaComic
                     )
@@ -331,12 +346,21 @@ private fun CommunitySection(
                 colors = CardDefaults.cardColors(containerColor = NaranjaCoral.copy(alpha = 0.12f))
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
-                    Text(
-                        text = "⚠ ${state.message}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TintaComic
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = NaranjaCoral,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = state.message,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TintaComic
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = onRetry,
@@ -353,61 +377,106 @@ private fun CommunitySection(
             Spacer(modifier = Modifier.height(8.dp))
 
             state.fallback.forEach { recipe ->
-                CommunityRecipeCard(recipe = recipe, isLocal = true)
+                CommunityRecipeCard(
+                    recipe = recipe,
+                    isLocal = true,
+                    onClick = { onOpenRecipe(recipe) }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
         is CommunityUiState.Success -> {
             state.recipes.forEach { recipe ->
-                CommunityRecipeCard(recipe = recipe, isLocal = false)
+                CommunityRecipeCard(
+                    recipe = recipe,
+                    isLocal = false,
+                    onClick = { onOpenRecipe(recipe) }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CommunityRecipeCard(
     recipe: CommunityRecipe,
-    isLocal: Boolean
+    isLocal: Boolean,
+    onClick: () -> Unit
 ) {
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .border(2.dp, TintaComic, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = BlancoPuro)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = if (isLocal) "🍽" else "🌎",
-                    fontSize = 15.sp
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .border(1.5.dp, TintaComic, RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isLocal) AmarilloMostaza else VerdeFresco.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (recipe.imageUrl.isNotBlank()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = recipe.imageUrl),
+                        contentDescription = recipe.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = if (isLocal) Icons.Default.Restaurant else Icons.Default.Public,
+                        contentDescription = null,
+                        tint = TintaComic,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = recipe.name,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = TintaComic
                 )
-            }
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = "${recipe.cuisine} · ${recipe.difficulty} · ${recipe.prepTimeMinutes} min",
-                fontSize = 11.sp,
-                color = NaranjaCoral,
-                fontWeight = FontWeight.Bold
-            )
-            if (recipe.ingredients.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = "${recipe.ingredients.size} ingredientes · ${recipe.instructions.size} pasos",
+                    text = "${recipe.cuisine} · ${recipe.difficulty} · ${recipe.prepTimeMinutes} min",
                     fontSize = 11.sp,
-                    color = TintaComic.copy(alpha = 0.65f)
+                    color = NaranjaCoral,
+                    fontWeight = FontWeight.Bold
                 )
+                if (recipe.ingredients.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "${recipe.ingredients.size} ingredientes · ${recipe.instructions.size} pasos",
+                        fontSize = 11.sp,
+                        color = TintaComic.copy(alpha = 0.65f)
+                    )
+                }
             }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Ver receta",
+                tint = NaranjaCoral,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

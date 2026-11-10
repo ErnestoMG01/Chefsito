@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import com.example.chefsito.ui.components.ChefsitoBottomBar
 import com.example.chefsito.ui.navigation.Routes
 import com.example.chefsito.ui.navigation.routesWithBottomBar
 import com.example.chefsito.ui.screens.auth.AuthScreen
+import com.example.chefsito.ui.screens.community.CommunityRecipeDetailScreen
 import com.example.chefsito.ui.screens.favorites.FavoritesScreen
 import com.example.chefsito.ui.screens.home.HomeScreen
 import com.example.chefsito.ui.screens.pantry.PantryScreen
@@ -132,6 +134,10 @@ class MainActivity : ComponentActivity() {
                                 profileImagePath = profileImagePath,
                                 communityState = communityState,
                                 onRetryCommunity = { communityViewModel.retry() },
+                                onOpenCommunityRecipe = { recipe ->
+                                    communityViewModel.selectRecipe(recipe)
+                                    navController.navigate(Routes.COMMUNITY_RECIPE)
+                                },
                                 onNavigateToBudget = { navController.goTo(Routes.PLAN) },
                                 onNavigateToPantry = { navController.goTo(Routes.PANTRY) },
                                 onNavigateToProfile = { navController.goTo(Routes.PROFILE) }
@@ -185,6 +191,24 @@ class MainActivity : ComponentActivity() {
                                     budget = budget,
                                     onBack = { navController.popBackStack() }
                                 )
+                            }
+                        }
+                        composable(Routes.COMMUNITY_RECIPE) {
+                            val selectedRecipe by communityViewModel.selectedRecipe
+                                .collectAsStateWithLifecycle()
+                            val recipe = selectedRecipe
+                            if (recipe != null) {
+                                CommunityRecipeDetailScreen(
+                                    recipe = recipe,
+                                    onBack = {
+                                        communityViewModel.clearSelection()
+                                        navController.popBackStack()
+                                    }
+                                )
+                            } else {
+                                LaunchedEffect(Unit) {
+                                    navController.popBackStack()
+                                }
                             }
                         }
                         composable(Routes.PROFILE) {

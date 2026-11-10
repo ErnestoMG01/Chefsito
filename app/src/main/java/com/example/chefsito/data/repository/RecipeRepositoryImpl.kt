@@ -31,6 +31,19 @@ class RecipeRepositoryImpl(
         pantry: List<IngredientEntity>,
         budget: Double,
         dayOfWeek: String?
+    ): List<RecipeCostBreakdown> =
+        recommendRecipeOptions(
+            pantry = pantry,
+            budget = budget,
+            dayOfWeek = dayOfWeek,
+            maxPerMeal = 1
+        )
+
+    override suspend fun recommendRecipeOptions(
+        pantry: List<IngredientEntity>,
+        budget: Double,
+        dayOfWeek: String?,
+        maxPerMeal: Int
     ): List<RecipeCostBreakdown> {
         val catalog = recipeDao.getAllRecipes().first()
         if (catalog.isEmpty()) return emptyList()
@@ -41,14 +54,16 @@ class RecipeRepositoryImpl(
         }
 
         val mealOrder = listOf("Desayuno", "Comida", "Cena")
+        val limit = maxPerMeal.coerceAtLeast(1)
 
-        return mealOrder.mapNotNull { meal ->
+        return mealOrder.flatMap { meal ->
             val candidates = breakdowns.filter {
                 RecipeCosting.normalize(it.recipe.mealType) == RecipeCosting.normalize(meal)
             }
-            if (candidates.isEmpty()) return@mapNotNull null
+            if (candidates.isEmpty()) return@flatMap emptyList()
 
-            // Primero las recetas asignadas explícitamente a ese día.
+            // Primero las recetas asignadas explícitamente a ese día; después el resto
+            // del catálogo para garantizar variedad cuando haya pocas asignadas.
             val assignedToDay = if (normalizedDay.isNullOrBlank()) {
                 emptyList()
             } else {
@@ -56,15 +71,24 @@ class RecipeRepositoryImpl(
                     RecipeCosting.normalize(it.recipe.dayOfWeek) == normalizedDay
                 }
             }
-            val pool = if (assignedToDay.isNotEmpty()) assignedToDay else candidates
+            val assignedIds = assignedToDay.map { it.recipe.id }.toSet()
 
-            pool.sortedWith(
-                compareByDescending<RecipeCostBreakdown> { it.matchCount }
-                    .thenByDescending { it.fitsBudget }
-                    .thenBy { it.missingCost }
-                    .thenBy { it.totalCost }
-                    .thenBy { it.recipe.title }
-            ).firstOrNull()
+            val comparator = compareByDescending<RecipeCostBreakdown> { it.matchCount }
+                .thenByDescending { it.fitsBudget }
+                .thenBy { it.missingCost }
+                .thenBy { it.totalCost }
+                .thenBy { it.recipe.title }
+
+            // Se conserva primero lo asignado al día y luego el resto del catálogo,
+            // cada grupo ordenado con la misma prioridad.
+            val orderedAssigned = assignedToDay.sortedWith(comparator)
+            val orderedRest = candidates
+                .filter { it.recipe.id !in assignedIds }
+                .sortedWith(comparator)
+
+            (orderedAssigned + orderedRest)
+                .distinctBy { it.recipe.id }
+                .take(limit)
         }
     }
 

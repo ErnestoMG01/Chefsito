@@ -21,6 +21,7 @@ object Routes {
     const val PROFILE = "profile"
     const val PANTRY = "pantry"
     const val RECIPE_DETAIL = "recipe/{recipeId}"
+    const val COMMUNITY_RECIPE = "community_recipe"
 
     fun recipeDetail(recipeId: Long): String = "recipe/$recipeId"
 }

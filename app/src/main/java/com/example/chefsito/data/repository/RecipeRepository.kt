@@ -28,6 +28,20 @@ interface RecipeRepository {
         dayOfWeek: String? = null
     ): List<RecipeCostBreakdown>
 
+    /**
+     * Devuelve varias alternativas por tipo de comida (Desayuno, Comida y Cena)
+     * ordenadas con la misma prioridad del motor determinista:
+     * más ingredientes en despensa, luego presupuesto y luego menor costo faltante.
+     *
+     * @param maxPerMeal número máximo de opciones por comida (mínimo recomendado: 2).
+     */
+    suspend fun recommendRecipeOptions(
+        pantry: List<IngredientEntity>,
+        budget: Double,
+        dayOfWeek: String? = null,
+        maxPerMeal: Int = 3
+    ): List<RecipeCostBreakdown>
+
     /** Carga el catálogo base si la tabla está vacía. */
     suspend fun seedIfEmpty()
 }

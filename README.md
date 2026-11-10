@@ -1,32 +1,11 @@
-# Chefsito 🍳
+# Chefsito
 
 Aplicación Android nativa (`com.example.chefsito`) para planear recetas mexicanas
 con base en la despensa del usuario, el costo real que pagó por cada ingrediente y
 un presupuesto objetivo. La app es **local-first** (Room + SharedPreferences) y
 consume una **API externa** para mostrar recetas de la comunidad.
 
----
-
-## ✅ Cumplimiento de la rúbrica
-
-| Criterio de la rúbrica | Implementación en Chefsito | Evidencia principal |
-|---|---|---|
-| Arquitectura **MVVM** | `ViewModel` + `StateFlow` + repositorios + UI Compose desacoplada | `ui/viewmodel/`, `ui/recipe/RecipeViewModel.kt`, `data/repository/` |
-| **Jetpack Compose** + Material 3 | Toda la interfaz es declarativa con tema cómic y Material 3 | `ui/screens/`, `ui/theme/`, `MainActivity.kt` |
-| **StateFlow** | Estados reactivos de recetas, despensa, perfil, presupuesto y comunidad | `RecipeUiState`, `ChefViewModel`, `CommunityViewModel` |
-| Persistencia local con **Room** | Base `ChefsitoDatabase` v4 con `IngredientEntity`, `RecipeEntity`, `UserEntity` | `data/local/` |
-| Persistencia de sesión con **SessionManager** | Guarda usuario, correo, token local y ruta de la foto de perfil | `utils/SessionManager.kt` |
-| **Conexión operativa a API externa** | `GET https://dummyjson.com/recipes?limit=8` con `HttpURLConnection` + `org.json`, sin API Key | `data/remote/CommunityRecipeService.kt` |
-| Funcionalidad 1: **Galería / imagen de perfil** | Selección desde galería, copia a almacenamiento interno, ruta persistida y visible en Perfil e Inicio | `ProfileScreen.kt`, `ImageUtils.kt`, `SessionManager.kt` |
-| Funcionalidad 2: **Audio con TextToSpeech** | Lectura en español (`es-MX`) de la descripción y del paso actual, con botón Escuchar/Detener | `RecipeDetailScreen.kt` |
-| Funcionalidad 3: **Exportación a PDF** | PDF nativo con `PdfDocument`, guardado en `Documents` y apertura/compartición | `utils/PdfExporter.kt`, `AndroidManifest.xml`, `res/xml/file_paths.xml` |
-| Catálogo mexicano específico | 24 recetas (8 desayunos, 8 comidas, 8 cenas) con cantidades, medidas y pasos cronometrados | `data/local/RecipeSeed.kt` |
-| UI/UX de botones y despensa | Botones con `shape`/`colors` (sin fondos fuera del contorno) y filas de despensa sin desbordamiento | `PantryScreen.kt`, `PlanScreen.kt`, `RecipeDetailScreen.kt` |
-| Compilación final | `assembleDebug` con 0 errores y APK generado | `app/build/outputs/apk/debug/app-debug.apk` |
-
----
-
-## 🧱 Arquitectura
+## Arquitectura
 
 ```
 UI (Jetpack Compose + Material 3)
@@ -45,7 +24,7 @@ Repositorios (RecipeRepository, IngredientRepository, AuthRepository)
 
 - **Paquete base:** `com.example.chefsito`
 - **Navegación:** Navigation Compose (`splash`, `auth`, `home`, `plan`, `favorites`,
-  `profile`, `pantry`, `recipe/{recipeId}`).
+  `profile`, `pantry`, `recipe/{recipeId}`, `community_recipe`).
 - **Tema:** cómic mexicano, paleta definida en `ui/theme/Color.kt`.
 - **Autenticación:** local con Room; contraseñas hasheadas con SHA-256
   (`PasswordHasher`). Es suficiente para la demo académica, no para producción.
@@ -64,7 +43,7 @@ local y `profileImagePath`. El presupuesto, teléfono y datos de perfil viven en
 
 ---
 
-## 🍽️ Funcionalidades principales
+## Funcionalidades principales
 
 ### 1. Galería / imagen de perfil
 
@@ -76,14 +55,14 @@ local y `profileImagePath`. El presupuesto, teléfono y datos de perfil viven en
 ### 2. Audio con `TextToSpeech` nativo
 
 - Motor `android.speech.tts.TextToSpeech` configurado en `es-MX`.
-- En el resumen de la receta: botón **🔊 Escuchar receta**.
-- En el modo paso a paso: botón **🔊 Escuchar paso** que lee el paso actual.
-- Mientras habla, el botón cambia a **⏹ Detener audio**.
+- En el resumen de la receta: botón **Escuchar receta**.
+- En el modo paso a paso: botón **Escuchar paso** que lee el paso actual.
+- Mientras habla, el botón cambia a **Detener audio**.
 - El recurso se libera con `DisposableEffect { onDispose { stop(); shutdown() } }`.
 
 ### 3. Exportación de receta a PDF
 
-- Botón **📄 Descargar Receta en PDF** en el detalle.
+- Botón **Descargar Receta en PDF** en el detalle.
 - Se usa `android.graphics.pdf.PdfDocument` (100% nativo, sin librerías externas).
 - El PDF incluye título, tipo de comida, tiempo, dificultad, costo calculado
   según la despensa, ingredientes con cantidades y pasos completos.
@@ -91,28 +70,44 @@ local y `profileImagePath`. El presupuesto, teléfono y datos de perfil viven en
 - Se muestra un `Toast` con la ruta y se abre con `ACTION_VIEW`; si no hay visor,
   se ofrece compartir con `ACTION_SEND` mediante `FileProvider`.
 
-### 4. Recetas de la Comunidad (API externa)
+### 4. Recetas Inspiradoras de la Red (API externa)
 
 - Endpoint público sin API Key: `https://dummyjson.com/recipes?limit=8`.
 - Cliente nativo con `HttpURLConnection` y `org.json` (sin Retrofit).
-- Sección **“🌐 Recetas de la Comunidad (Conectado vía API)”** en Inicio.
+- Sección **“Recetas Inspiradoras de la Red”** en Inicio, conectada al
+  `StateFlow` de `CommunityViewModel`.
+- Cada tarjeta es clicable y abre `CommunityRecipeDetailScreen`, que muestra
+  imagen, título, categoría, dificultad, tiempo, ingredientes e instrucciones
+  devueltas por la red.
 - Estados manejados con `StateFlow`:
   - **Loading:** indicador de carga.
-  - **Success:** tarjetas con nombre, cocina, dificultad, tiempo e ingredientes.
+  - **Success:** tarjetas con miniatura, nombre, cocina, dificultad y tiempo.
   - **Error:** mensaje, botón **Reintentar** y fallback local con recetas del seed.
 
-### 5. Motor de costos y recomendación
+### 5. Motor de costos y recomendación múltiple
 
 - Cada ingrediente del seed se guarda como `"Cantidad + Nombre|CostoEstimado"`.
 - `RecipeCosting.breakdown()` separa lo que el usuario **ya tiene** (costo real
   `userCost`) de lo que le **falta** (costo estimado).
 - `totalCost = ownedCost + missingCost`; `fitsBudget = totalCost <= budget`.
-- La recomendación prioriza: más ingredientes en despensa → cabe en presupuesto
-  → menor costo faltante, filtrando por día de la semana.
+- `recommendRecipeOptions()` devuelve hasta **3 alternativas por comida**
+  (Desayuno, Comida y Cena), priorizando: más ingredientes en despensa → cabe en
+  presupuesto → menor costo faltante.
+- Las alternativas se muestran en listas horizontales desplazables agrupadas por
+  tipo de comida, para que el usuario elija la que más se le antoje.
+
+### 6. Planificación Día / Semana
+
+- Se eliminó el selector largo de Lunes a Domingo.
+- El selector **Día** evalúa las recetas de hoy y muestra las alternativas por
+  Desayuno, Comida y Cena.
+- El selector **Semana** reparte el presupuesto entre 7 días y presenta una
+  planeación compacta con la mejor opción de cada comida por día.
+- Tocar cualquier comida de la vista semanal abre el detalle completo de la receta.
 
 ---
 
-## 🥘 Catálogo mexicano
+## Catálogo 
 
 `RecipeSeed` incluye **24 recetas completas**:
 
@@ -128,7 +123,7 @@ local y `profileImagePath`. El presupuesto, teléfono y datos de perfil viven en
 
 ---
 
-## 🚀 Instalación y ejecución
+## Instalación y ejecución
 
 ### Requisitos
 
@@ -166,7 +161,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
-## 📁 Estructura relevante
+## Estructura relevante
 
 ```
 app/src/main/java/com/example/chefsito/
@@ -179,7 +174,7 @@ app/src/main/java/com/example/chefsito/
 │   └── domain/RecipeCosting.kt      # Motor de costos y matching
 ├── ui/
 │   ├── navigation/                  # Rutas
-│   ├── screens/                     # Splash, Auth, Home, Plan, Favoritos, Perfil, Despensa, Receta
+│   ├── screens/                     # Splash, Auth, Home, Plan, Favoritos, Perfil, Despensa, Receta y Comunidad
 │   ├── components/                  # BottomBar, botones, banners, loaders
 │   ├── theme/                       # Colores y tipografía
 │   ├── recipe/RecipeViewModel.kt    # Estado del plan y favoritos
@@ -193,11 +188,14 @@ app/src/main/java/com/example/chefsito/
 
 ---
 
-## 📝 Notas para la demo
+## Notas para la demo
 
 - La despensa y el catálogo son compartidos; presupuesto y perfil son por usuario.
 - Al subir la versión de la base a **4**, `fallbackToDestructiveMigration` recrea
   las tablas y vuelve a sembrar las 24 recetas (comportamiento esperado en demo).
-- El plan semanal reparte el presupuesto entre 7 días.
-- La sección de la comunidad requiere internet; sin conexión muestra el fallback
-  local y el botón **Reintentar**.
+- El plan semanal reparte el presupuesto entre 7 días y muestra la mejor opción
+  de cada comida; la vista **Día** ofrece hasta 3 alternativas por comida.
+- La sección de la red requiere internet; sin conexión muestra el fallback local
+  y el botón **Reintentar**.
+- La interfaz usa iconos nativos de Material Design y conserva solo los emojis de
+  comida (🍳 Desayuno, 🍲 Comida, 🌙 Cena) y el avatar de perfil (👤).

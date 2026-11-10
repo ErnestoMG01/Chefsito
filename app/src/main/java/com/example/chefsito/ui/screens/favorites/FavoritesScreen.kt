@@ -241,12 +241,19 @@ private fun MealBadge(mealType: String) {
             .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(
-            text = mealType,
+            text = "${mealEmoji(mealType)} $mealType",
             fontSize = 10.sp,
             fontWeight = FontWeight.Black,
             color = if (mealType == "Desayuno") TintaComic else BlancoPuro
         )
     }
+}
+
+private fun mealEmoji(mealType: String): String = when (mealType) {
+    "Desayuno" -> "🍳"
+    "Comida" -> "🍲"
+    "Cena" -> "🌙"
+    else -> ""
 }
 
 private fun mealColor(mealType: String): Color = when (mealType) {
