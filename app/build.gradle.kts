@@ -5,11 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.chefsito"
-    compileSdk = 35
+    namespace = "com.upchiapas.chefsito"
+    compileSdk{
+        version = release(37)
+    }
 
     defaultConfig {
-        applicationId = "com.example.chefsito"
+        applicationId = "com.upchiapas.chefsito"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
