@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PDFs guardados en Android/data/<paquete>/files/Documents -->
+    <external-files-path
+        name="documents"
+        path="Documents/" />
+    <!-- Respaldo interno si el almacenamiento externo no está disponible -->
+    <files-path
+        name="internal_documents"
+        path="documents/" />
+</paths>
