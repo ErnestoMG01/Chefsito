@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.chefsito.data.local.ChefsitoDatabase
 import com.example.chefsito.data.local.entity.IngredientEntity
 import com.example.chefsito.utils.ImageUtils
+import com.example.chefsito.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,8 +29,10 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
                 initialValue = emptyList()
             )
 
+    // Preferencias aisladas por usuario: presupuesto, foto y datos de perfil.
+    private val currentUserId = SessionManager.getUserId(application) ?: 0L
     private val sharedPreferences =
-        application.getSharedPreferences("chefsito_prefs", Context.MODE_PRIVATE)
+        application.getSharedPreferences("chefsito_prefs_", Context.MODE_PRIVATE)
 
     private val savedBudget = sharedPreferences.getFloat("user_budget", 150f).toDouble()
 
@@ -43,6 +46,7 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _profileImagePath = MutableStateFlow(
         sharedPreferences.getString("profile_image_path", null)
+            ?: SessionManager.getProfileImagePath(application)
     )
     val profileImagePath: StateFlow<String?> = _profileImagePath.asStateFlow()
 
@@ -51,10 +55,13 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
             val path = ImageUtils.saveImageToInternalStorage(context, uri) ?: return@launch
             _profileImagePath.value = path
             sharedPreferences.edit().putString("profile_image_path", path).apply()
+            // TambiÃ©n se guarda en la sesiÃ³n activa para que el header de Inicio
+            // pueda mostrarla sin depender del ViewModel del perfil.
+            SessionManager.saveProfileImagePath(context, path)
         }
     }
 
-    // ---- Datos personales del perfil (se guardan en el teléfono) ----
+    // ---- Datos personales del perfil (se guardan en el telÃ©fono) ----
     private val _profileName = MutableStateFlow(sharedPreferences.getString("profile_name", "") ?: "")
     val profileName: StateFlow<String> = _profileName.asStateFlow()
 
@@ -75,10 +82,15 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
             .apply()
     }
 
-    fun saveIngredient(name: String, category: String, price: Double, id: Long = 0L) {
+    fun saveIngredient(name: String, category: String, userCost: Double, id: Long = 0L) {
         viewModelScope.launch {
             ingredientDao.insertIngredient(
-                IngredientEntity(id = id, name = name.trim(), category = category, userCost = price)
+                IngredientEntity(
+                    id = id,
+                    name = name.trim(),
+                    category = category,
+                    userCost = userCost
+                )
             )
         }
     }

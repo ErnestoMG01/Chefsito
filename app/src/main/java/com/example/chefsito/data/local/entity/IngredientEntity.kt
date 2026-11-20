@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
  * Ingrediente de la despensa del usuario.
  *
  * @property userCost Costo que el usuario pagó realmente por el ingrediente.
- * @property isInPantry True si lo tiene en casa.
+ * No es un precio estático del catálogo: lo captura el propio usuario.
+ * @property isInPantry True si lo tiene en casa (disponible para cocinar).
  */
 @Entity(tableName = "ingredients")
 data class IngredientEntity(
@@ -18,5 +19,7 @@ data class IngredientEntity(
     val userCost: Double = 0.0,
     val isInPantry: Boolean = true
 ) {
+    /** @deprecated Usa [userCost] directamente. Mantenido para compatibilidad. */
+    @Deprecated("Usa userCost directamente", ReplaceWith("userCost"))
     val price: Double get() = userCost
 }

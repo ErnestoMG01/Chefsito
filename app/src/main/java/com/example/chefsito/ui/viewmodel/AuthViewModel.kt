@@ -1,23 +1,36 @@
 package com.example.chefsito.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.chefsito.data.local.entity.UserEntity
+import com.example.chefsito.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class AuthUiState(
     val isLoginMode: Boolean = true,
     val name: String = "",
     val email: String = "",
     val password: String = "",
+    val confirmPassword: String = "",
     val isPasswordVisible: Boolean = false,
+    val isConfirmPasswordVisible: Boolean = false,
+    val emailError: String? = null,
+    val passwordError: String? = null,
+    val confirmPasswordError: String? = null,
     val errorMessage: String? = null,
     val successMessage: String? = null,
-    val isAuthenticated: Boolean = false,
+    val isLoading: Boolean = false,
+    val authenticatedUser: UserEntity? = null,
 )
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -27,7 +40,10 @@ class AuthViewModel : ViewModel() {
             it.copy(
                 isLoginMode = isLogin,
                 errorMessage = null,
-                successMessage = null
+                successMessage = null,
+                emailError = null,
+                passwordError = null,
+                confirmPasswordError = null
             )
         }
     }
@@ -37,15 +53,25 @@ class AuthViewModel : ViewModel() {
     }
 
     fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email, errorMessage = null) }
+        _uiState.update { it.copy(email = email, emailError = null, errorMessage = null) }
     }
 
     fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password, errorMessage = null) }
+        _uiState.update { it.copy(password = password, passwordError = null, errorMessage = null) }
+    }
+
+    fun onConfirmPasswordChange(confirmPassword: String) {
+        _uiState.update {
+            it.copy(confirmPassword = confirmPassword, confirmPasswordError = null, errorMessage = null)
+        }
     }
 
     fun togglePasswordVisibility() {
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+    }
+
+    fun toggleConfirmPasswordVisibility() {
+        _uiState.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
     }
 
     fun clearMessages() {
@@ -53,117 +79,109 @@ class AuthViewModel : ViewModel() {
     }
 
     fun onForgotPasswordClick() {
-        if (_uiState.value.email.isBlank()) {
-            _uiState.update {
-                it.copy(
-                    errorMessage = "Ingresa tu correo para recuperar la contraseña",
-                    successMessage = null
-                )
+        val email = _uiState.value.email.trim()
+        when {
+            email.isBlank() -> _uiState.update {
+                it.copy(errorMessage = "Ingresa tu correo para recuperar la contraseña", successMessage = null)
             }
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(_uiState.value.email.trim()).matches()) {
-            _uiState.update {
-                it.copy(
-                    errorMessage = "Ingresa un correo electrónico válido",
-                    successMessage = null
-                )
+            !isValidEmail(email) -> _uiState.update {
+                it.copy(errorMessage = "Ingresa un correo electrónico válido", successMessage = null)
             }
-        } else {
-            _uiState.update {
-                it.copy(
-                    errorMessage = null,
-                    successMessage = "Se ha enviado un correo para restablecer tu contraseña"
-                )
+            else -> _uiState.update {
+                it.copy(errorMessage = null, successMessage = "Se ha enviado un correo para restablecer tu contraseña")
             }
         }
     }
 
-    fun submitForm(onLoginSuccess: (email: String, displayName: String) -> Unit) {
+    fun submitForm() {
         val state = _uiState.value
-        val emailTrimmed = state.email.trim()
+        if (state.isLoading) return
+
+        val email = state.email.trim()
+        var emailErr: String? = null
+        var passwordErr: String? = null
+        var confirmErr: String? = null
+        var nameErr: String? = null
+
+        if (email.isBlank()) {
+            emailErr = "El correo es requerido"
+        } else if (!isValidEmail(email)) {
+            emailErr = "Ingresa un correo válido"
+        }
 
         if (state.isLoginMode) {
-            // Validaciones Login
-            if (emailTrimmed.isBlank() || state.password.isBlank()) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "Completa todos los campos",
-                        successMessage = null
-                    )
-                }
-                return
-            }
-
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(emailTrimmed).matches()) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "Ingresa un correo electrónico válido",
-                        successMessage = null
-                    )
-                }
-                return
-            }
-
-            if (state.password.length < 6) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "La contraseña debe tener al menos 6 caracteres",
-                        successMessage = null
-                    )
-                }
-                return
-            }
-
-            // Éxito Login
-            val displayName = state.name.ifBlank { emailTrimmed.substringBefore("@") }
-            _uiState.update {
-                it.copy(
-                    errorMessage = null,
-                    successMessage = "Inicio de sesión exitoso",
-                    isAuthenticated = true
-                )
-            }
-            onLoginSuccess(emailTrimmed, displayName)
-
+            if (state.password.isBlank()) passwordErr = "La contraseña es requerida"
         } else {
-            // Validaciones Registro
-            if (state.name.isBlank() || emailTrimmed.isBlank() || state.password.isBlank()) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "Completa todos los campos",
-                        successMessage = null
-                    )
-                }
-                return
-            }
-
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(emailTrimmed).matches()) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "Ingresa un correo electrónico válido",
-                        successMessage = null
-                    )
-                }
-                return
-            }
-
+            if (state.name.isBlank()) nameErr = "El nombre es requerido"
             if (state.password.length < 6) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage = "La contraseña debe tener al menos 6 caracteres",
-                        successMessage = null
-                    )
-                }
-                return
+                passwordErr = "La contraseña debe tener al menos 6 caracteres"
             }
-
-            // Éxito Registro -> Cambia a modo Iniciar Sesión mostrando banner de éxito como en la imagen
-            _uiState.update {
-                it.copy(
-                    isLoginMode = true,
-                    errorMessage = null,
-                    successMessage = "Registro completado. Ya puedes iniciar sesión."
-                )
+            if (state.confirmPassword.isBlank()) {
+                confirmErr = "Confirma tu contraseña"
+            } else if (state.confirmPassword != state.password) {
+                confirmErr = "Las contraseñas no coinciden"
             }
         }
+
+        val firstError = nameErr ?: emailErr ?: passwordErr ?: confirmErr
+        if (firstError != null) {
+            _uiState.update {
+                it.copy(
+                    emailError = emailErr,
+                    passwordError = passwordErr,
+                    confirmPasswordError = confirmErr,
+                    errorMessage = firstError,
+                    successMessage = null
+                )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null) }
+
+            val result = if (state.isLoginMode) {
+                authRepository.login(email, state.password)
+            } else {
+                authRepository.register(state.name, email, state.password)
+            }
+
+            result.onSuccess { user ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        authenticatedUser = user,
+                        successMessage = if (state.isLoginMode) {
+                            "¡Bienvenido de nuevo, ${user.name}!"
+                        } else {
+                            "Cuenta creada. ¡Bienvenido, ${user.name}!"
+                        },
+                        errorMessage = null
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "No se pudo completar la operación"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun isValidEmail(email: String): Boolean =
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+}
+
+class AuthViewModelFactory(
+    private val authRepository: AuthRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
+            return AuthViewModel(authRepository) as T
+        }
+        throw IllegalArgumentException("Clase ViewModel desconocida")
     }
 }

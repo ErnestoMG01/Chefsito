@@ -4,13 +4,15 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Receta del catálogo local de Chefsito.
+ * Receta del catÃ¡logo local de Chefsito.
  *
- * @property description Descripción general del platillo.
+ * @property description DescripciÃ³n general del platillo (pantalla de resumen).
  * @property mealType Tipo de comida: "Desayuno", "Comida" o "Cena".
- * @property dayOfWeek Día sugerido de la semana (Lunes..Domingo).
- * @property ingredients Ingredientes separados por saltos de línea con formato `"Nombre|CostoEstimado"`.
- * @property steps Instrucciones paso a paso separadas por saltos de línea.
+ * @property dayOfWeek DÃ­a sugerido de la semana (Lunes..Domingo).
+ * @property ingredients Ingredientes separados por saltos de lÃ­nea con formato
+ * "Nombre|CostoEstimado". El costo estimado se usa SOLO cuando el usuario no
+ * tiene ese ingrediente en su despensa.
+ * @property steps Instrucciones paso a paso separadas por saltos de lÃ­nea.
  */
 @Entity(tableName = "recipes")
 data class RecipeEntity(
@@ -19,7 +21,7 @@ data class RecipeEntity(
     val title: String,
     val estimatedPrice: Double,
     val prepTimeMinutes: Int,
-    val difficulty: String = "Fácil",
+    val difficulty: String = "FÃ¡cil",
     val isFavorite: Boolean = false,
     val description: String = "",
     val mealType: String = "Comida",
