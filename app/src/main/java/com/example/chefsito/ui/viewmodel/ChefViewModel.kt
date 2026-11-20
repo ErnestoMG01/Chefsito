@@ -78,7 +78,7 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
     fun saveIngredient(name: String, category: String, price: Double, id: Long = 0L) {
         viewModelScope.launch {
             ingredientDao.insertIngredient(
-                IngredientEntity(id = id, name = name.trim(), category = category, price = price)
+                IngredientEntity(id = id, name = name.trim(), category = category, userCost = price)
             )
         }
     }
