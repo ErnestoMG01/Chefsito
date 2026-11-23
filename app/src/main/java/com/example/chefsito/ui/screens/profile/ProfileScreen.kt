@@ -12,12 +12,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,9 +30,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.chefsito.ui.components.ChefsitoIconButton
 import com.example.chefsito.ui.components.ChefsitoMessageBanner
 import com.example.chefsito.ui.components.MessageType
 import com.example.chefsito.ui.theme.*
@@ -64,8 +69,14 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
+    // Estados para visibilidad de contraseñas
+    var isCurrentPasswordVisible by remember { mutableStateOf(false) }
+    var isNewPasswordVisible by remember { mutableStateOf(false) }
+    var isConfirmPasswordVisible by remember { mutableStateOf(false) }
+
     var statusMessage by remember { mutableStateOf<String?>(null) }
-    var isError by remember { mutableStateOf(false) }
+    var messageType by remember { mutableStateOf(MessageType.SUCCESS) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -73,7 +84,7 @@ fun ProfileScreen(
         uri?.let {
             viewModel.updateProfileImage(context, it)
             statusMessage = "Tu foto de perfil se actualizó correctamente."
-            isError = false
+            messageType = MessageType.SUCCESS
         }
     }
 
@@ -88,17 +99,6 @@ fun ProfileScreen(
                 .padding(horizontal = 16.dp),
             contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
         ) {
-            statusMessage?.let { message ->
-                item {
-                    ChefsitoMessageBanner(
-                        title = if (isError) "ERROR" else "ÉXITO",
-                        message = message,
-                        type = if (isError) MessageType.WARNING else MessageType.SUCCESS,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                }
-            }
-
             item {
                 Text(
                     text = "Mi Perfil",
@@ -165,28 +165,49 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Button(
-                                onClick = { imageLauncher.launch("image/*") },
-                                modifier = Modifier
-                                    .height(36.dp)
-                                    .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp)),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = BlancoPuro),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Upload,
-                                        contentDescription = null,
-                                        tint = TintaComic,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Subir foto",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TintaComic
+                                Button(
+                                    onClick = { imageLauncher.launch("image/*") },
+                                    modifier = Modifier
+                                        .height(36.dp)
+                                        .weight(1f)
+                                        .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp)),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = BlancoPuro),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Upload,
+                                            contentDescription = null,
+                                            tint = TintaComic,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Subir foto",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TintaComic
+                                        )
+                                    }
+                                }
+
+                                // Botón eliminar foto (solo visible si hay imagen)
+                                val hasImage = imagePath != null && File(imagePath!!).exists()
+                                if (hasImage) {
+                                    ChefsitoIconButton(
+                                        onClick = { showDeleteDialog = true },
+                                        showBorder = false,
+                                        backgroundColor = FondoCrema,
+                                        tint = NaranjaCoral,
+                                        contentDescription = "Eliminar foto",
+                                        size = 36.dp,
+                                        iconSize = 20.dp,
+                                        cornerRadius = 8.dp
                                     )
                                 }
                             }
@@ -248,11 +269,11 @@ fun ProfileScreen(
                         onClick = {
                             if (email.isNotBlank() && !email.contains("@")) {
                                 statusMessage = "Ingresa un correo electrónico válido."
-                                isError = true
+                                messageType = MessageType.WARNING
                             } else {
                                 viewModel.updateProfileData(name, email, phone)
                                 statusMessage = "Tus datos se actualizaron correctamente."
-                                isError = false
+                                messageType = MessageType.SUCCESS
                             }
                         },
                         modifier = Modifier
@@ -301,7 +322,17 @@ fun ProfileScreen(
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = TintaComic)
                         },
-                        visualTransformation = PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isCurrentPasswordVisible = !isCurrentPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isCurrentPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Mostrar u ocultar contraseña actual",
+                                    tint = TintaComic.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (isCurrentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
@@ -314,7 +345,17 @@ fun ProfileScreen(
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = TintaComic)
                         },
-                        visualTransformation = PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isNewPasswordVisible = !isNewPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isNewPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Mostrar u ocultar nueva contraseña",
+                                    tint = TintaComic.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (isNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
@@ -327,7 +368,17 @@ fun ProfileScreen(
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = TintaComic)
                         },
-                        visualTransformation = PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { isConfirmPasswordVisible = !isConfirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isConfirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Mostrar u ocultar confirmación de contraseña",
+                                    tint = TintaComic.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp)
@@ -337,13 +388,13 @@ fun ProfileScreen(
                         onClick = {
                             if (newPassword.length < 8) {
                                 statusMessage = "La nueva contraseña debe tener al menos 8 caracteres."
-                                isError = true
+                                messageType = MessageType.WARNING
                             } else if (newPassword != confirmPassword) {
                                 statusMessage = "Las contraseñas nuevas no coinciden."
-                                isError = true
+                                messageType = MessageType.WARNING
                             } else {
                                 statusMessage = "Tu contraseña se cambió correctamente."
-                                isError = false
+                                messageType = MessageType.SUCCESS
                                 currentPassword = ""
                                 newPassword = ""
                                 confirmPassword = ""
@@ -365,6 +416,25 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Actualizar contraseña", color = BlancoPuro, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Mensaje de estado cerca del botón de contraseña
+                    statusMessage?.let { message ->
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp)
+                        ) {
+                            ChefsitoMessageBanner(
+                                title = when (messageType) {
+                                    MessageType.SUCCESS -> "ÉXITO"
+                                    MessageType.DELETE -> "ELIMINADO"
+                                    else -> "ERROR"
+                                },
+                                message = message,
+                                type = messageType,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
 
@@ -393,5 +463,40 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+
+    // Dialog de confirmación para eliminar foto
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Eliminar foto de perfil", fontWeight = FontWeight.Bold, color = TintaComic) },
+            text = {
+                Text(
+                    "¿Estás seguro de que quieres eliminar tu foto de perfil? Esta acción no se puede deshacer.",
+                    color = TintaComic.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deleteProfileImage(context)
+                        statusMessage = "Foto de perfil eliminada correctamente."
+                        messageType = MessageType.DELETE
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = NaranjaCoral)
+                ) {
+                    Text("Eliminar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TintaComic)
+                ) {
+                    Text("Cancelar", fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }

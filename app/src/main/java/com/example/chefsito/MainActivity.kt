@@ -39,7 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chefsito.ui.recipe.RecipeViewModel
 import com.example.chefsito.ui.recipe.RecipeViewModelFactory
 import com.example.chefsito.ChefsitoApplication
+import com.example.chefsito.domain.usecase.GetCommunityRecipesUseCase
 import com.example.chefsito.ui.viewmodel.ChefViewModel
+import com.example.chefsito.ui.viewmodel.ChefViewModelFactory
 import com.example.chefsito.ui.viewmodel.CommunityViewModel
 
 private fun NavHostController.goTo(route: String) {
@@ -51,9 +53,6 @@ private fun NavHostController.goTo(route: String) {
 }
 
 class MainActivity : ComponentActivity() {
-
-    // ViewModel que conecta la base de datos Room con la UI
-    private val chefViewModel: ChefViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Pantalla completa moderna: la app dibuja detrás de las barras del sistema
@@ -68,16 +67,45 @@ class MainActivity : ComponentActivity() {
             val context = androidx.compose.ui.platform.LocalContext.current
             val application = context.applicationContext as ChefsitoApplication
             
+            // ChefViewModel con UseCases inyectados desde Application
+            val chefViewModel: ChefViewModel = viewModel(
+                factory = ChefViewModelFactory(
+                    application = application,
+                    getAllIngredientsUseCase = application.getAllIngredientsUseCase,
+                    getPantryIngredientsUseCase = application.getPantryIngredientsUseCase,
+                    saveIngredientUseCase = application.saveIngredientUseCase,
+                    deleteIngredientUseCase = application.deleteIngredientUseCase,
+                    togglePantryStatusUseCase = application.togglePantryStatusUseCase,
+                    getBudgetUseCase = application.getBudgetUseCase,
+                    updateBudgetUseCase = application.updateBudgetUseCase,
+                    updateProfileImageUseCase = application.updateProfileImageUseCase,
+                    deleteProfileImageUseCase = application.deleteProfileImageUseCase,
+                    updateProfileDataUseCase = application.updateProfileDataUseCase
+                )
+            )
+
             // Instanciar RecipeViewModel a nivel global para compartirlo
             val recipeViewModel: RecipeViewModel = viewModel(
                 factory = RecipeViewModelFactory(
                     recipeRepository = application.recipeRepository,
-                    ingredientRepository = application.ingredientRepository
+                    generateRecipePlanUseCase = application.generateRecipePlanUseCase
                 )
             )
 
             // ViewModel de la sección "Recetas de la Comunidad" (API externa).
-            val communityViewModel: CommunityViewModel = viewModel()
+            val communityViewModel: CommunityViewModel = viewModel(
+                factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                        if (modelClass.isAssignableFrom(CommunityViewModel::class.java)) {
+                            return CommunityViewModel(
+                                getCommunityRecipesUseCase = GetCommunityRecipesUseCase(application.communityRepository)
+                            ) as T
+                        }
+                        throw IllegalArgumentException("Unknown ViewModel class")
+                    }
+                }
+            )
             
             ChefsitoTheme {
                 val navController = rememberNavController()

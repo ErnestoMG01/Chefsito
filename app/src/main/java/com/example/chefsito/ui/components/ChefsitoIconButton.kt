@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.chefsito.ui.theme.FondoCrema
 import com.example.chefsito.ui.theme.NaranjaCoral
@@ -21,22 +22,31 @@ import com.example.chefsito.ui.theme.TintaComic
 @Composable
 fun ChefsitoIconButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    iconVector: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.Delete,
+    contentDescription: String = "Eliminar",
+    tint: androidx.compose.ui.graphics.Color = NaranjaCoral,
+    showBorder: Boolean = true,
+    borderColor: androidx.compose.ui.graphics.Color = TintaComic,
+    backgroundColor: androidx.compose.ui.graphics.Color = FondoCrema,
+    size: androidx.compose.ui.unit.Dp = 32.dp,
+    iconSize: androidx.compose.ui.unit.Dp = 16.dp,
+    cornerRadius: androidx.compose.ui.unit.Dp = 8.dp
 ) {
     Box(
         modifier = modifier
-            .size(32.dp)
-            .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp))
-            .clip(RoundedCornerShape(8.dp))
-            .background(FondoCrema)
+            .size(size)
+            .border(if (showBorder) 1.5.dp else 0.dp, borderColor, RoundedCornerShape(cornerRadius))
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(backgroundColor)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = "Eliminar",
-            tint = NaranjaCoral,
-            modifier = Modifier.size(16.dp)
+            imageVector = iconVector,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(iconSize)
         )
     }
 }

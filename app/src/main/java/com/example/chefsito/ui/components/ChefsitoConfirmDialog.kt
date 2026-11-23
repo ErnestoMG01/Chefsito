@@ -42,8 +42,6 @@ fun ChefsitoConfirmDialog(
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                modifier = Modifier
-                    .border(1.5.dp, TintaComic, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = NaranjaCoral)
             ) {
@@ -57,10 +55,8 @@ fun ChefsitoConfirmDialog(
         dismissButton = {
             OutlinedButton(
                 onClick = onDismiss,
-                modifier = Modifier
-                    .border(1.5.dp, TintaComic, RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = BlancoPuro)
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = BlancoPuro, contentColor = TintaComic)
             ) {
                 Text(
                     text = dismissText,

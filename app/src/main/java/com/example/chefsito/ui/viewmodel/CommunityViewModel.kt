@@ -2,13 +2,13 @@ package com.example.chefsito.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chefsito.data.domain.RecipeCosting
-import com.example.chefsito.data.local.RecipeSeed
 import com.example.chefsito.data.remote.CommunityRecipe
-import com.example.chefsito.data.remote.CommunityRecipeService
+import com.example.chefsito.domain.model.CommunityRecipesUiState
+import com.example.chefsito.domain.usecase.GetCommunityRecipesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -26,7 +26,9 @@ sealed interface CommunityUiState {
     ) : CommunityUiState
 }
 
-class CommunityViewModel : ViewModel() {
+class CommunityViewModel(
+    private val getCommunityRecipesUseCase: GetCommunityRecipesUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CommunityUiState>(CommunityUiState.Loading)
     val uiState: StateFlow<CommunityUiState> = _uiState.asStateFlow()
@@ -49,41 +51,23 @@ class CommunityViewModel : ViewModel() {
 
     fun loadRecipes() {
         viewModelScope.launch {
-            _uiState.value = CommunityUiState.Loading
-            runCatching { CommunityRecipeService.fetchRecipes() }
-                .onSuccess { recipes ->
-                    _uiState.value = if (recipes.isEmpty()) {
-                        CommunityUiState.Error(
-                            message = "La API respondió sin recetas. Mostrando catálogo local.",
-                            fallback = localFallback()
-                        )
-                    } else {
-                        CommunityUiState.Success(recipes)
-                    }
+            getCommunityRecipesUseCase().collect { state ->
+                _uiState.value = when (state) {
+                    is CommunityRecipesUiState.Loading -> CommunityUiState.Loading
+                    is CommunityRecipesUiState.Success -> CommunityUiState.Success(state.recipes)
+                    is CommunityRecipesUiState.Error -> CommunityUiState.Error(state.message, state.fallback)
                 }
-                .onFailure { error ->
-                    _uiState.value = CommunityUiState.Error(
-                        message = error.message ?: "No fue posible conectar con la API.",
-                        fallback = localFallback()
-                    )
-                }
+            }
         }
     }
 
     fun retry() = loadRecipes()
 
-    /** Fallback local para demostrar la UI aun sin internet. */
-    private fun localFallback(): List<CommunityRecipe> =
-        RecipeSeed.recipes.take(6).mapIndexed { index, recipe ->
-            CommunityRecipe(
-                id = 9_000 + index,
-                name = recipe.title,
-                cuisine = "Mexicana (local)",
-                difficulty = recipe.difficulty,
-                prepTimeMinutes = recipe.prepTimeMinutes,
-                ingredients = RecipeCosting.parseIngredients(recipe).map { it.name },
-                instructions = RecipeCosting.parseSteps(recipe),
-                imageUrl = ""
-            )
+    /** Recarga forzada desde la API. */
+    fun refresh() {
+        viewModelScope.launch {
+            getCommunityRecipesUseCase.refresh()
+            loadRecipes()
         }
+    }
 }

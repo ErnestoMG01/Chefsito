@@ -1,0 +1,204 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.6.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:64:55 Syntax error: Expecting ')'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:75:28 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/compareTo' in 'compareTo'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:153:34 Argument type mismatch: actual type is 'Function0<Unit>', but 'Function2<@ParameterName(...) Int, Pair<Pair<Triple<String, Double, String>, Paint>, Paint>, Unit>' was expected.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:153:36 Unresolved reference 'index'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:153:41 Syntax error: Unexpected tokens (use ';' to separate expressions on the same line).
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:154:34 Unresolved reference 'index'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:156:68 Unresolved reference 'iconColor'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:157:33 Unresolved reference 'title'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:158:38 Unresolved reference 'cost'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:159:33 Unresolved reference 'subtitle'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:160:21 Unresolved reference 'index'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:269:43 Argument type mismatch: actual type is 'Paint', but 'Int' was expected.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:275:17 Unresolved reference 'drawWrappedAt'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:309:27 Unresolved reference 'buildIngredientRows'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:337:9 Unresolved reference 'drawCostSummaryCards'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:364:13 Argument type mismatch: actual type is 'R (of fun <T : Closeable?, R> T.use)', but 'K (of fun <K> TRY_CALL)' was expected.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:364:36 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:364:36 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T : Closeable?, R> T.use(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:364:42 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:367:13 Argument type mismatch: actual type is 'Nothing', but 'K (of fun <K> TRY_CALL)' was expected.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:367:20 Null cannot be a value of a non-null type 'Float'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:375:5 Modifier 'private' is not applicable to 'local function'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:380:28 Unresolved reference 'formatQuantity'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:389:28 Unresolved reference 'formatQuantity'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:398:5 Modifier 'private' is not applicable to 'local function'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:438:1 Missing return statement.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:13 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:19 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:20 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:28 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:29 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:30 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:32 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:36 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:37 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:41 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:42 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:48 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:49 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:51 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:60 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:61 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:62 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:64 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:66 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:68 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:70 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:72 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:74 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:77 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:79 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:88 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:89 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:92 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:94 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:105 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:107 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:112 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:449:113 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:13 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:19 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:20 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:28 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:29 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:30 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:32 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:34 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:43 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:44 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:49 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:50 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:51 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:52 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:53 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:55 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:64 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:65 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:66 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:68 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:70 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:72 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:74 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:76 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:78 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:81 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:83 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:92 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:93 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:96 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:98 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:109 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:111 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:115 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:450:116 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:13 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:20 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:33 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:35 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:36 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:40 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:41 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:46 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:48 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:49 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:51 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:452:53 Syntax error: Expecting member declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:456:29 Unresolved reference 'MARGIN'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:456:50 Unresolved reference 'MARGIN'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:457:17 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:457:23 Unresolved reference 'COLOR_SECTION_BG'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:458:36 Unresolved reference 'MARGIN'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:13 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:14 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:15 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:21 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:21 Function declaration must have a name.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:28 Unresolved reference 'exists'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:461:38 Unresolved reference 'mkdirs'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:463:25 Unresolved reference 'recipe'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:469:25 Unresolved reference 'documentsDir'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:473:39 Unresolved reference 'pageInfo'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:475:17 Unresolved reference 'CONTENT_TOP'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:477:46 Unresolved reference 'recipe'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:478:27 Unresolved reference 'buildIngredientRows'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:478:47 Unresolved reference 'breakdown'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:483:27 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:483:33 Unresolved reference 'COLOR_ACCENT'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:484:26 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:484:41 Unresolved reference 'COLOR_TEXT_DARK'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:485:33 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:485:48 Unresolved reference 'COLOR_ACCENT'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:486:25 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:486:40 Unresolved reference 'COLOR_TEXT_MEDIUM'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:487:29 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:487:44 Unresolved reference 'COLOR_TEXT_DARK'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:488:26 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:488:40 Unresolved reference 'COLOR_TEXT_MUTED'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:489:26 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:489:40 Unresolved reference 'COLOR_WHITE'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:490:28 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:490:34 Unresolved reference 'COLOR_BORDER'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:490:48 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:490:54 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:490:56 Unresolved reference 'strokeWidth'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:491:32 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:491:47 Unresolved reference 'COLOR_WHITE'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:492:30 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:492:45 Unresolved reference 'COLOR_TEXT_MEDIUM'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:493:34 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:493:49 Unresolved reference 'COLOR_TEXT_DARK'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:494:31 Unresolved reference 'textPaint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:494:46 Unresolved reference 'COLOR_WHITE'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:495:27 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:495:33 Unresolved reference 'COLOR_ACCENT'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:496:27 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:496:33 Unresolved reference 'COLOR_CARD_BG'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:497:30 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:497:36 Unresolved reference 'COLOR_SECTION_BG'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:498:28 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:498:34 Unresolved reference 'COLOR_SUCCESS'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:499:30 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:499:36 Unresolved reference 'COLOR_SUCCESS_LIGHT'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:500:29 Unresolved reference 'paint'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:500:35 Unresolved reference 'COLOR_ACCENT_LIGHT'.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:501:1 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:501:2 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:502:1 Syntax error: Expecting a top level declaration.
+e: file:///C:/Users/Jesus/AndroidStudioProjects/Chefsito/app/src/main/java/com/example/chefsito/utils/PdfExporter.kt:503:1 Syntax error: Expecting a top level declaration.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 12s
+8 actionable tasks: 2 executed, 6 up-to-date
+Configuration cache entry reused.

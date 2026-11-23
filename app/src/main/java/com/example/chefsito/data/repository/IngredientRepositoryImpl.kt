@@ -12,6 +12,10 @@ class IngredientRepositoryImpl(
         return ingredientDao.getAllIngredients()
     }
 
+    override fun getPantryIngredients(): Flow<List<IngredientEntity>> {
+        return ingredientDao.getPantryIngredients()
+    }
+
     override suspend fun getIngredientById(id: Long): IngredientEntity? {
         return ingredientDao.getIngredientById(id)
     }
@@ -26,5 +30,10 @@ class IngredientRepositoryImpl(
 
     override suspend fun deleteIngredient(ingredient: IngredientEntity) {
         ingredientDao.deleteIngredient(ingredient)
+    }
+
+    override suspend fun togglePantryStatus(ingredient: IngredientEntity) {
+        val updated = ingredient.copy(isInPantry = !ingredient.isInPantry)
+        ingredientDao.updateIngredient(updated)
     }
 }

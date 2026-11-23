@@ -5,9 +5,17 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.chefsito.data.local.ChefsitoDatabase
 import com.example.chefsito.data.local.entity.IngredientEntity
-import com.example.chefsito.utils.ImageUtils
+import com.example.chefsito.domain.usecase.DeleteIngredientUseCase
+import com.example.chefsito.domain.usecase.DeleteProfileImageUseCase
+import com.example.chefsito.domain.usecase.GetAllIngredientsUseCase
+import com.example.chefsito.domain.usecase.GetBudgetUseCase
+import com.example.chefsito.domain.usecase.GetPantryIngredientsUseCase
+import com.example.chefsito.domain.usecase.SaveIngredientUseCase
+import com.example.chefsito.domain.usecase.TogglePantryStatusUseCase
+import com.example.chefsito.domain.usecase.UpdateBudgetUseCase
+import com.example.chefsito.domain.usecase.UpdateProfileDataUseCase
+import com.example.chefsito.domain.usecase.UpdateProfileImageUseCase
 import com.example.chefsito.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,74 +25,102 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ChefViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val ingredientDao = ChefsitoDatabase.getDatabase(application).ingredientDao()
+class ChefViewModel(
+    application: Application,
+    private val getAllIngredientsUseCase: GetAllIngredientsUseCase,
+    private val getPantryIngredientsUseCase: GetPantryIngredientsUseCase,
+    private val saveIngredientUseCase: SaveIngredientUseCase,
+    private val deleteIngredientUseCase: DeleteIngredientUseCase,
+    private val togglePantryStatusUseCase: TogglePantryStatusUseCase,
+    private val getBudgetUseCase: GetBudgetUseCase,
+    private val updateBudgetUseCase: UpdateBudgetUseCase,
+    private val updateProfileImageUseCase: UpdateProfileImageUseCase,
+    private val deleteProfileImageUseCase: DeleteProfileImageUseCase,
+    private val updateProfileDataUseCase: UpdateProfileDataUseCase
+) : AndroidViewModel(application) {
 
     val pantryIngredients: StateFlow<List<IngredientEntity>> =
-        ingredientDao.getPantryIngredients()
+        getPantryIngredientsUseCase()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = emptyList()
             )
 
-    // Preferencias aisladas por usuario: presupuesto, foto y datos de perfil.
-    private val currentUserId = SessionManager.getUserId(application) ?: 0L
-    private val sharedPreferences =
-        application.getSharedPreferences("chefsito_prefs_", Context.MODE_PRIVATE)
-
-    private val savedBudget = sharedPreferences.getFloat("user_budget", 150f).toDouble()
-
-    private val _userBudget = MutableStateFlow(savedBudget)
+    private val _userBudget = MutableStateFlow(0.0)
     val userBudget: StateFlow<Double> = _userBudget.asStateFlow()
 
-    fun updateBudget(newBudget: Double) {
-        _userBudget.value = newBudget
-        sharedPreferences.edit().putFloat("user_budget", newBudget.toFloat()).apply()
+    init {
+        loadBudget()
     }
 
-    private val _profileImagePath = MutableStateFlow(
-        sharedPreferences.getString("profile_image_path", null)
-            ?: SessionManager.getProfileImagePath(application)
-    )
-    val profileImagePath: StateFlow<String?> = _profileImagePath.asStateFlow()
-
-    fun updateProfileImage(context: Context, uri: Uri) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val path = ImageUtils.saveImageToInternalStorage(context, uri) ?: return@launch
-            _profileImagePath.value = path
-            sharedPreferences.edit().putString("profile_image_path", path).apply()
-            // TambiÃ©n se guarda en la sesiÃ³n activa para que el header de Inicio
-            // pueda mostrarla sin depender del ViewModel del perfil.
-            SessionManager.saveProfileImagePath(context, path)
+    private fun loadBudget() {
+        viewModelScope.launch {
+            _userBudget.value = getBudgetUseCase()
         }
     }
 
-    // ---- Datos personales del perfil (se guardan en el telÃ©fono) ----
-    private val _profileName = MutableStateFlow(sharedPreferences.getString("profile_name", "") ?: "")
+    fun updateBudget(newBudget: Double) {
+        _userBudget.value = newBudget
+        viewModelScope.launch {
+            updateBudgetUseCase(newBudget)
+        }
+    }
+
+    private val _profileImagePath = MutableStateFlow<String?>(null)
+    val profileImagePath: StateFlow<String?> = _profileImagePath.asStateFlow()
+
+    fun updateProfileImage(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val path = updateProfileImageUseCase(uri)
+            path?.let { _profileImagePath.value = it }
+        }
+    }
+
+    fun deleteProfileImage(context: Context) {
+        viewModelScope.launch {
+            val success = deleteProfileImageUseCase()
+            if (success) {
+                _profileImagePath.value = null
+            }
+        }
+    }
+
+    // ---- Datos personales del perfil (se guardan en el teléfono) ----
+    private val _profileName = MutableStateFlow("")
     val profileName: StateFlow<String> = _profileName.asStateFlow()
 
-    private val _profileEmail = MutableStateFlow(sharedPreferences.getString("profile_email", "") ?: "")
+    private val _profileEmail = MutableStateFlow("")
     val profileEmail: StateFlow<String> = _profileEmail.asStateFlow()
 
-    private val _profilePhone = MutableStateFlow(sharedPreferences.getString("profile_phone", "") ?: "")
+    private val _profilePhone = MutableStateFlow("")
     val profilePhone: StateFlow<String> = _profilePhone.asStateFlow()
+
+    init {
+        loadProfileData()
+    }
+
+    private fun loadProfileData() {
+        viewModelScope.launch {
+            val prefs = getApplication<Application>().getSharedPreferences("chefsito_prefs_", Context.MODE_PRIVATE)
+            _profileName.value = prefs.getString("profile_name", "") ?: ""
+            _profileEmail.value = prefs.getString("profile_email", "") ?: ""
+            _profilePhone.value = prefs.getString("profile_phone", "") ?: ""
+        }
+    }
 
     fun updateProfileData(name: String, email: String, phone: String) {
         _profileName.value = name.trim()
         _profileEmail.value = email.trim()
         _profilePhone.value = phone.trim()
-        sharedPreferences.edit()
-            .putString("profile_name", name.trim())
-            .putString("profile_email", email.trim())
-            .putString("profile_phone", phone.trim())
-            .apply()
+        viewModelScope.launch {
+            updateProfileDataUseCase(name, email, phone)
+        }
     }
 
     fun saveIngredient(name: String, category: String, userCost: Double, id: Long = 0L) {
         viewModelScope.launch {
-            ingredientDao.insertIngredient(
+            saveIngredientUseCase(
                 IngredientEntity(
                     id = id,
                     name = name.trim(),
@@ -97,7 +133,47 @@ class ChefViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeIngredient(ingredient: IngredientEntity) {
         viewModelScope.launch {
-            ingredientDao.deleteIngredient(ingredient)
+            deleteIngredientUseCase(ingredient)
         }
+    }
+
+    fun togglePantryStatus(ingredient: IngredientEntity) {
+        viewModelScope.launch {
+            togglePantryStatusUseCase(ingredient)
+        }
+    }
+}
+
+class ChefViewModelFactory(
+    private val application: Application,
+    private val getAllIngredientsUseCase: GetAllIngredientsUseCase,
+    private val getPantryIngredientsUseCase: GetPantryIngredientsUseCase,
+    private val saveIngredientUseCase: SaveIngredientUseCase,
+    private val deleteIngredientUseCase: DeleteIngredientUseCase,
+    private val togglePantryStatusUseCase: TogglePantryStatusUseCase,
+    private val getBudgetUseCase: GetBudgetUseCase,
+    private val updateBudgetUseCase: UpdateBudgetUseCase,
+    private val updateProfileImageUseCase: UpdateProfileImageUseCase,
+    private val deleteProfileImageUseCase: DeleteProfileImageUseCase,
+    private val updateProfileDataUseCase: UpdateProfileDataUseCase
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ChefViewModel::class.java)) {
+            return ChefViewModel(
+                application = application,
+                getAllIngredientsUseCase = getAllIngredientsUseCase,
+                getPantryIngredientsUseCase = getPantryIngredientsUseCase,
+                saveIngredientUseCase = saveIngredientUseCase,
+                deleteIngredientUseCase = deleteIngredientUseCase,
+                togglePantryStatusUseCase = togglePantryStatusUseCase,
+                getBudgetUseCase = getBudgetUseCase,
+                updateBudgetUseCase = updateBudgetUseCase,
+                updateProfileImageUseCase = updateProfileImageUseCase,
+                deleteProfileImageUseCase = deleteProfileImageUseCase,
+                updateProfileDataUseCase = updateProfileDataUseCase
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
