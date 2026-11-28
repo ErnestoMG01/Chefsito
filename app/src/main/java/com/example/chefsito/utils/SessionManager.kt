@@ -29,7 +29,7 @@ object SessionManager {
      * En el laboratorio de AWS se puede actualizar desde Perfil o BuildConfig a la IP/DNS
      * pública de la instancia EC2 (ej. `http://54.xxx.xxx.xxx:8000` o `https://api.tu-dominio.com`).
      */
-    const val DEFAULT_AWS_BASE_URL = "http://10.0.2.2:8000"
+    const val DEFAULT_AWS_BASE_URL = "http://3.91.46.131:8000"
 
     private val _activeUserIdFlow = MutableStateFlow(0L)
     val activeUserIdFlow: StateFlow<Long> = _activeUserIdFlow.asStateFlow()
