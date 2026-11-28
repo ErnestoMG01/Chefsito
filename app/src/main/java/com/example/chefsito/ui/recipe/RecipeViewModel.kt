@@ -46,6 +46,7 @@ class RecipeViewModel(
 ) : ViewModel() {
 
     private val _isGeneratingRecipe = MutableStateFlow(false)
+    private val _isSyncingCatalog = MutableStateFlow(false)
     private val _planState = MutableStateFlow(PlanSnapshot())
     private val _message = MutableStateFlow<String?>(null)
     private val _error = MutableStateFlow<String?>(null)
@@ -71,10 +72,15 @@ class RecipeViewModel(
 
     val uiState: StateFlow<RecipeUiState> = combine(
         baseState,
+        _isSyncingCatalog,
         _message,
         _error
-    ) { state, message, error ->
-        state.copy(message = message, error = error)
+    ) { state, isSyncing, message, error ->
+        state.copy(
+            isSyncingCatalog = isSyncing,
+            message = message,
+            error = error
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -93,22 +99,71 @@ class RecipeViewModel(
         viewModelScope.launch { recipeRepository.deleteRecipe(recipe) }
     }
 
-    /** Alterna el corazón de una receta y la agrega/quita de Favoritos. */
+    /** Alterna el corazón de una receta para el usuario activo y la sincroniza con AWS RDS. */
     fun toggleFavorite(recipeId: Long) {
         viewModelScope.launch {
-            val recipe = recipeRepository.getRecipeById(recipeId) ?: return@launch
-            recipeRepository.updateRecipe(recipe.copy(isFavorite = !recipe.isFavorite))
+            recipeRepository.toggleFavoriteForCurrentUser(recipeId)
+        }
+    }
+
+    /**
+     * Sincroniza el catálogo con el servidor AWS RDS e importa nuevas recetas actualizadas
+     * para que la aplicación siempre tenga más variedad que las 24 precargadas.
+     */
+    fun syncDynamicRecipesFromCloud(fetchNewExternal: Boolean = true) {
+        if (_isSyncingCatalog.value) return
+        viewModelScope.launch {
+            _isSyncingCatalog.value = true
+            _error.value = null
+            _message.value = null
+
+            val result = recipeRepository.syncWithCloudCatalog(fetchNewExternal = fetchNewExternal)
+            result.onSuccess { totalCount ->
+                _message.value = "Catálogo sincronizado con AWS: $totalCount recetas disponibles"
+            }.onFailure { err ->
+                val count = recipeRepository.getRecipeCount()
+                _message.value = "Modo local activo ($count recetas). Configura la IP de tu servidor AWS EC2 en Mi Perfil para sincronizar en vivo (${err.message ?: "sin conexión"})."
+            }
+            _isSyncingCatalog.value = false
+        }
+    }
+
+    /**
+     * Permite crear y publicar una nueva receta dinámica en la base de datos (Room + AWS RDS).
+     */
+    fun createNewDynamicRecipe(
+        title: String,
+        description: String,
+        mealType: String,
+        dayOfWeek: String,
+        prepTimeMinutes: Int,
+        difficulty: String,
+        rawIngredientsText: String,
+        rawStepsText: String
+    ) {
+        viewModelScope.launch {
+            _isSyncingCatalog.value = true
+            val res = recipeRepository.createDynamicRecipe(
+                title = title,
+                description = description,
+                mealType = mealType,
+                dayOfWeek = dayOfWeek,
+                prepTimeMinutes = prepTimeMinutes,
+                difficulty = difficulty,
+                rawIngredientsText = rawIngredientsText,
+                rawStepsText = rawStepsText
+            )
+            res.onSuccess { created ->
+                _message.value = "Nueva receta '${created.title}' agregada al catálogo dinámico"
+            }.onFailure { err ->
+                _error.value = "No se pudo guardar la receta: ${err.message}"
+            }
+            _isSyncingCatalog.value = false
         }
     }
 
     /**
      * Genera el plan de "Día" o "Semana" usando el motor determinista.
-     *
-     * - Día: devuelve varias alternativas por Desayuno, Comida y Cena para hoy.
-     * - Semana: reparte el presupuesto entre 7 días y calcula un plan compacto por día.
-     *
-     * En ambos casos se prioriza lo que el usuario ya tiene en la despensa y el
-     * presupuesto disponible.
      */
     fun generateRecipe(
         budget: Double = 100.0,

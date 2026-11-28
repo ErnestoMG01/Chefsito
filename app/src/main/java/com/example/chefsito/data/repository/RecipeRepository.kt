@@ -14,13 +14,34 @@ interface RecipeRepository {
     suspend fun updateRecipe(recipe: RecipeEntity)
     suspend fun deleteRecipe(recipe: RecipeEntity)
 
+    /** Alterna el estado de favorito para el usuario activo (local + sincronización AWS). */
+    suspend fun toggleFavoriteForCurrentUser(recipeId: Long)
+
+    /**
+     * Sincroniza el catálogo local de Room con la base de datos desplegada en AWS RDS
+     * y opcionalmente dispara la ingesta dinámica de nuevas recetas desde proveedores externos.
+     *
+     * @return Número total de recetas disponibles tras la sincronización.
+     */
+    suspend fun syncWithCloudCatalog(fetchNewExternal: Boolean = false): Result<Int>
+
+    /**
+     * Crea una receta personalizada y la publica tanto en Room como en el servidor AWS
+     * para que el catálogo siempre pueda recibir nuevas recetas actualizadas.
+     */
+    suspend fun createDynamicRecipe(
+        title: String,
+        description: String,
+        mealType: String,
+        dayOfWeek: String,
+        prepTimeMinutes: Int,
+        difficulty: String,
+        rawIngredientsText: String,
+        rawStepsText: String
+    ): Result<RecipeEntity>
+
     /**
      * Motor determinista de recomendación.
-     *
-     * Para el día seleccionado elige, por cada tipo de comida, la receta que:
-     * 1. Tiene más ingredientes que el usuario ya posee.
-     * 2. Cabe mejor en el presupuesto disponible.
-     * 3. Requiere menor costo de ingredientes faltantes.
      */
     suspend fun recommendRecipes(
         pantry: List<IngredientEntity>,
@@ -29,11 +50,7 @@ interface RecipeRepository {
     ): List<RecipeCostBreakdown>
 
     /**
-     * Devuelve varias alternativas por tipo de comida (Desayuno, Comida y Cena)
-     * ordenadas con la misma prioridad del motor determinista:
-     * más ingredientes en despensa, luego presupuesto y luego menor costo faltante.
-     *
-     * @param maxPerMeal número máximo de opciones por comida (mínimo recomendado: 2).
+     * Devuelve varias alternativas por tipo de comida (Desayuno, Comida y Cena).
      */
     suspend fun recommendRecipeOptions(
         pantry: List<IngredientEntity>,
@@ -42,6 +59,6 @@ interface RecipeRepository {
         maxPerMeal: Int = 3
     ): List<RecipeCostBreakdown>
 
-    /** Carga el catálogo base si la tabla está vacía. */
+    /** Carga el catálogo base si la tabla está vacía y sincroniza con AWS si está disponible. */
     suspend fun seedIfEmpty()
 }

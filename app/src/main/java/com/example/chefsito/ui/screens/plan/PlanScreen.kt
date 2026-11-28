@@ -15,7 +15,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Warning
@@ -70,6 +72,7 @@ fun PlanScreen(
 
     var budgetText by remember { mutableStateOf(currentBudget.toInt().toString()) }
     var selectedTab by remember { mutableStateOf("Día") }
+    var showAddRecipeDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     LaunchedEffect(currentBudget) {
@@ -167,6 +170,94 @@ fun PlanScreen(
                         fontWeight = FontWeight.Bold,
                         color = NaranjaCoral
                     )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Catálogo Dinámico en la Nube AWS (Sincronización + Nuevas Recetas)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(2.dp, TintaComic, RoundedCornerShape(12.dp)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = BlancoPuro)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Catálogo Dinámico (${recipeUiState.recipes.size} recetas)",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TintaComic
+                        )
+                        Text(
+                            text = "Sincroniza con AWS RDS o agrega nuevas recetas actualizadas",
+                            fontSize = 11.sp,
+                            color = TintaComic.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { recipeViewModel.syncDynamicRecipesFromCloud(fetchNewExternal = true) },
+                        enabled = !recipeUiState.isSyncingCatalog,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp)),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AmarilloMostaza),
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = null,
+                            tint = TintaComic,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (recipeUiState.isSyncingCatalog) "Sincronizando..." else "Actualizar de AWS",
+                            color = TintaComic,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = { showAddRecipeDialog = true },
+                        modifier = Modifier
+                            .height(40.dp)
+                            .border(1.5.dp, TintaComic, RoundedCornerShape(8.dp)),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = VerdeFresco),
+                        contentPadding = PaddingValues(horizontal = 10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = BlancoPuro,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Nueva receta",
+                            color = BlancoPuro,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }
@@ -369,6 +460,142 @@ fun PlanScreen(
             )
         }
     }
+
+    if (showAddRecipeDialog) {
+        AddDynamicRecipeDialog(
+            onDismiss = { showAddRecipeDialog = false },
+            onSave = { title, desc, mealType, day, minutes, rawIngs, rawSteps ->
+                recipeViewModel.createNewDynamicRecipe(
+                    title = title,
+                    description = desc,
+                    mealType = mealType,
+                    dayOfWeek = day,
+                    prepTimeMinutes = minutes,
+                    difficulty = "Fácil",
+                    rawIngredientsText = rawIngs,
+                    rawStepsText = rawSteps
+                )
+                showAddRecipeDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun AddDynamicRecipeDialog(
+    onDismiss: () -> Unit,
+    onSave: (
+        title: String,
+        description: String,
+        mealType: String,
+        dayOfWeek: String,
+        minutes: Int,
+        rawIngredients: String,
+        rawSteps: String
+    ) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var mealType by remember { mutableStateOf("Comida") }
+    var dayOfWeek by remember { mutableStateOf(todayName()) }
+    var minutesText by remember { mutableStateOf("25") }
+    var ingredientsText by remember {
+        mutableStateOf("3 piezas de tortilla de maíz|6.0\n150 g de pollo|25.0\n2 piezas de jitomate|5.0")
+    }
+    var stepsText by remember {
+        mutableStateOf("Cocina el pollo y deshébralo.\nPrepara la salsa con el jitomate.\nSirve caliente con las tortillas.")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.border(2.dp, TintaComic, RoundedCornerShape(16.dp)),
+        containerColor = FondoCrema,
+        title = {
+            Text(
+                text = "Publicar nueva receta en catálogo",
+                fontWeight = FontWeight.Bold,
+                color = TintaComic,
+                fontSize = 16.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Título del platillo") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Descripción breve") },
+                    maxLines = 2
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("Desayuno", "Comida", "Cena").forEach { type ->
+                        Button(
+                            onClick = { mealType = type },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (mealType == type) AmarilloMostaza else BlancoPuro
+                            ),
+                            contentPadding = PaddingValues(4.dp)
+                        ) {
+                            Text(type, color = TintaComic, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = minutesText,
+                    onValueChange = { if (it.all(Char::isDigit)) minutesText = it },
+                    label = { Text("Tiempo (minutos)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = ingredientsText,
+                    onValueChange = { ingredientsText = it },
+                    label = { Text("Ingredientes (1 por línea, opcional |Costo)") },
+                    minLines = 3
+                )
+                OutlinedTextField(
+                    value = stepsText,
+                    onValueChange = { stepsText = it },
+                    label = { Text("Pasos (1 por línea)") },
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank() && ingredientsText.isNotBlank()) {
+                        onSave(
+                            title,
+                            description,
+                            mealType,
+                            dayOfWeek,
+                            minutesText.toIntOrNull() ?: 25,
+                            ingredientsText,
+                            stepsText
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = VerdeFresco)
+            ) {
+                Text("Guardar en AWS + App", color = BlancoPuro, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = TintaComic, fontWeight = FontWeight.Bold)
+            }
+        }
+    )
 }
 
 @Composable

@@ -24,6 +24,7 @@ data class RecipeUiState(
     val favoriteRecipes: List<RecipeEntity> = emptyList(),
     val isLoading: Boolean = false,
     val isGeneratingRecipe: Boolean = false,
+    val isSyncingCatalog: Boolean = false,
     val planType: String = "Día",
     val recommendations: List<RecipeCostBreakdown> = emptyList(),
     val mealOptions: List<MealOptionGroup> = emptyList(),

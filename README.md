@@ -188,14 +188,9 @@ app/src/main/java/com/example/chefsito/
 
 ---
 
-## Notas para la demo
+## Notas para la demo y despliegue en AWS (Rama `feat/243873`)
 
-- La despensa y el catálogo son compartidos; presupuesto y perfil son por usuario.
-- Al subir la versión de la base a **4**, `fallbackToDestructiveMigration` recrea
-  las tablas y vuelve a sembrar las 24 recetas (comportamiento esperado en demo).
-- El plan semanal reparte el presupuesto entre 7 días y muestra la mejor opción
-  de cada comida; la vista **Día** ofrece hasta 3 alternativas por comida.
-- La sección de la red requiere internet; sin conexión muestra el fallback local
-  y el botón **Reintentar**.
-- La interfaz usa iconos nativos de Material Design y conserva solo los emojis de
-  comida (🍳 Desayuno, 🍲 Comida, 🌙 Cena) y el avatar de perfil (👤).
+- **Arquitectura Híbrida (Offline-First + Cloud AWS):** La app mantiene Room v5 como caché local inmediata y se sincroniza con el backend desplegado en **Amazon EC2 + Amazon RDS (PostgreSQL 16)** ubicado en `backend/`.
+- **Soporte Multiusuario Simultáneo:** Tanto en Room v5 como en PostgreSQL (AWS RDS), la despensa (`userId`), los favoritos (`user_favorites`) y el presupuesto están **aislados por usuario**, permitiendo múltiples sesiones y dispositivos concurrentes autenticados con **JWT + Bcrypt**.
+- **Catálogo Dinámico de Recetas:** Además de las 24 recetas precargadas, el servidor AWS incluye +12 recetas mexicanas en la nube (36 iniciales), un ingestador en vivo conectado a **TheMealDB (Cocina Mexicana) + DummyJSON** que calcula costos estimados en MXN automáticamente (`POST /api/v1/recipes/sync-external`), y creación directa desde la app (**Configurar Plan → Actualizar de AWS / + Nueva receta**).
+- Consulta [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md) para los pasos detallados de despliegue y seguridad en el Laboratorio de AWS.

@@ -8,6 +8,7 @@ import com.example.chefsito.data.repository.IngredientRepository
 import com.example.chefsito.data.repository.IngredientRepositoryImpl
 import com.example.chefsito.data.repository.RecipeRepository
 import com.example.chefsito.data.repository.RecipeRepositoryImpl
+import com.example.chefsito.utils.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,16 +28,17 @@ class ChefsitoApplication : Application() {
     }
 
     val recipeRepository: RecipeRepository by lazy {
-        RecipeRepositoryImpl(database.recipeDao())
+        RecipeRepositoryImpl(database.recipeDao(), this)
     }
 
     val authRepository: AuthRepository by lazy {
-        AuthRepositoryImpl(database.userDao())
+        AuthRepositoryImpl(database.userDao(), this)
     }
 
     override fun onCreate() {
         super.onCreate()
-        // Pre-carga el catálogo de recetas la primera vez que arranca la app.
+        SessionManager.init(this)
+        // Pre-carga el catálogo de recetas local y sincroniza con el servidor AWS RDS si está disponible.
         applicationScope.launch {
             recipeRepository.seedIfEmpty()
         }

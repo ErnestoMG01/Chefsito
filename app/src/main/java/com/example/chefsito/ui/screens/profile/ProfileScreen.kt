@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -53,6 +54,7 @@ fun ProfileScreen(
     val savedName by viewModel.profileName.collectAsState()
     val savedEmail by viewModel.profileEmail.collectAsState()
     val savedPhone by viewModel.profilePhone.collectAsState()
+    val savedAwsUrl by viewModel.awsApiBaseUrl.collectAsState()
 
     val sessionName = remember { SessionManager.getUserName(context) ?: "" }
     val sessionEmail = remember { SessionManager.getUserEmail(context) ?: "" }
@@ -60,6 +62,7 @@ fun ProfileScreen(
     var name by remember { mutableStateOf(savedName.ifBlank { sessionName }) }
     var email by remember { mutableStateOf(savedEmail.ifBlank { sessionEmail }) }
     var phone by remember { mutableStateOf(savedPhone) }
+    var awsServerUrl by remember(savedAwsUrl) { mutableStateOf(savedAwsUrl) }
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -365,6 +368,57 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Actualizar contraseña", color = BlancoPuro, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Servidor AWS Cloud (EC2 + RDS)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TintaComic
+                    )
+                    Text(
+                        text = "Endpoint del backend desplegado en tu laboratorio de AWS (ej. http://54.xxx.xxx.xxx:8000)",
+                        fontSize = 11.sp,
+                        color = TintaComic.copy(alpha = 0.6f)
+                    )
+
+                    OutlinedTextField(
+                        value = awsServerUrl,
+                        onValueChange = { awsServerUrl = it },
+                        label = { Text("URL BASE AWS API") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Cloud, contentDescription = null, tint = TintaComic)
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    Button(
+                        onClick = {
+                            viewModel.updateAwsApiBaseUrl(awsServerUrl)
+                            statusMessage = "Servidor AWS configurado: ${SessionManager.getApiBaseUrl(context)}"
+                            isError = false
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .border(2.dp, TintaComic, RoundedCornerShape(10.dp)),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AmarilloMostaza)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Cloud,
+                                contentDescription = null,
+                                tint = TintaComic,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Guardar conexión AWS", color = TintaComic, fontWeight = FontWeight.Bold)
                         }
                     }
 

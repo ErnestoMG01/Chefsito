@@ -1,0 +1,43 @@
+services:
+  # Base de datos PostgreSQL local o de respaldo en EC2
+  # (En AWS Lab puedes apuntar DATABASE_URL directamente al endpoint de Amazon RDS PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: chefsito_postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chefsito_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChefsitoSecure2026!}
+      POSTGRES_DB: ${POSTGRES_DB:-chefsito_db}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chefsito_admin} -d ${POSTGRES_DB:-chefsito_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Backend Multiusuario de Chefsito
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chefsito_cloud_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://chefsito_admin:ChefsitoSecure2026!@db:5432/chefsito_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-chefsito-aws-lab-super-secret-jwt-key-243873}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-chefsito-admin-243873}
+      AUTO_SEED_ON_STARTUP: "true"
+      DB_POOL_SIZE: "15"
+      DB_MAX_OVERFLOW: "25"
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

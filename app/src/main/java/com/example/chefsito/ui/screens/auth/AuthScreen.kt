@@ -128,10 +128,11 @@ fun AuthScreen(
     )
     val uiState by viewModel.uiState.collectAsState()
 
-    // Cuando Room confirma el login/registro, persistimos la sesión y navegamos.
+    // Cuando el backend AWS o Room confirma el login/registro, aseguramos la sesión y navegamos.
     LaunchedEffect(uiState.authenticatedUser) {
         val user = uiState.authenticatedUser ?: return@LaunchedEffect
-        SessionManager.saveSession(context, user.id, user.name, user.email)
+        val existingToken = SessionManager.getSessionToken(context)
+        SessionManager.saveSession(context, user.id, user.name, user.email, existingToken)
         onLoginSuccess(user.name)
     }
 

@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Receta del catálogo local de Chefsito.
+ * Receta del catálogo local y sincronizado desde la nube AWS de Chefsito.
  *
  * @property description Descripción general del platillo (pantalla de resumen).
  * @property mealType Tipo de comida: "Desayuno", "Comida" o "Cena".
@@ -13,6 +13,8 @@ import androidx.room.PrimaryKey
  * `"Nombre|CostoEstimado"`. El costo estimado se usa SOLO cuando el usuario no
  * tiene ese ingrediente en su despensa.
  * @property steps Instrucciones paso a paso separadas por saltos de línea.
+ * @property source Origen de la receta (`SEED_MEXICANO`, `AWS_CLOUD_CATALOG`, `THEMEALDB_LIVE`, etc.).
+ * @property externalId Identificador único remoto para sincronización incremental sin duplicados.
  */
 @Entity(tableName = "recipes")
 data class RecipeEntity(
@@ -27,5 +29,7 @@ data class RecipeEntity(
     val mealType: String = "Comida",
     val dayOfWeek: String = "",
     val ingredients: String = "",
-    val steps: String = ""
+    val steps: String = "",
+    val source: String = "SEED_MEXICANO",
+    val externalId: String = ""
 )

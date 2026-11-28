@@ -10,10 +10,16 @@ import com.example.chefsito.data.local.dao.UserDao
 import com.example.chefsito.data.local.entity.IngredientEntity
 import com.example.chefsito.data.local.entity.RecipeEntity
 import com.example.chefsito.data.local.entity.UserEntity
+import com.example.chefsito.data.local.entity.UserFavoriteEntity
 
 @Database(
-    entities = [IngredientEntity::class, RecipeEntity::class, UserEntity::class],
-    version = 4,
+    entities = [
+        IngredientEntity::class,
+        RecipeEntity::class,
+        UserEntity::class,
+        UserFavoriteEntity::class
+    ],
+    version = 5,
     exportSchema = false
 )
 abstract class ChefsitoDatabase : RoomDatabase() {
@@ -33,8 +39,7 @@ abstract class ChefsitoDatabase : RoomDatabase() {
                     ChefsitoDatabase::class.java,
                     "chefsito_database"
                 )
-                    // Entrega inmediata: si cambia el schema se recrea la BD en lugar
-                    // de lanzar una excepción de migración.
+                    // Si cambia el schema se recrea la BD local y se re-sincroniza con AWS/seed.
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance

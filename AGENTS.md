@@ -229,3 +229,33 @@ Aplicación Android `com.example.chefsito` 100% local (sin IA) con:
 - La sección de la red requiere internet; sin conexión usa el fallback local y el botón **Reintentar**. Las recetas de la API se abren en un detalle con imagen e instrucciones.
 - Al subir la base a la versión 4 se recrean las tablas y se vuelven a sembrar las 24 recetas (esperado para la demo).
 - Archivos vacíos heredados de refactors previos en `data/entity/` y `data/ChefsitoDatabase.kt` no afectan la compilación.
+
+## 9. Iteración 3 (Rama `feat/243873`): Despliegue en AWS, Multiusuario Concurrente y Catálogo Dinámico
+
+### 9.1 Backend Cloud API (FastAPI + PostgreSQL en AWS RDS)
+- [x] Creación del servidor backend en `backend/` con **FastAPI + SQLAlchemy 2.0 + Uvicorn (multi-worker)**.
+- [x] Configuración de pool de conexiones (`DB_POOL_SIZE=15`, `DB_MAX_OVERFLOW=25`, `pool_pre_ping=True`) en `backend/app/database.py` para soportar múltiples usuarios simultáneos en Amazon RDS (`db.t3.micro`).
+- [x] Esquema relacional multiusuario en `backend/app/models.py`: `users`, `recipes`, `user_pantry` (con restricción única `user_id + name`) y `user_favorites` (`user_id + recipe_id`).
+- [x] Seguridad en `backend/app/security.py`: hash de contraseñas con **Bcrypt (12 rondas + salt)**, autenticación **JWT (`Bearer`)**, control de **Rate Limiting por IP** contra fuerza bruta y cabecera `X-Admin-Key` para administración del catálogo.
+  - Archivos: `backend/requirements.txt`, `backend/.env.example`, `backend/app/database.py`, `backend/app/models.py`, `backend/app/security.py`, `backend/app/schemas.py`, `backend/app/main.py`.
+
+### 9.2 Ingesta y Actualización Dinámica de Recetas
+- [x] `backend/app/recipe_ingestor.py` incluye las 24 recetas base mexicanas + **12 nuevas recetas mexicanas en la nube (`AWS_CLOUD_CATALOG`)** = 36 recetas iniciales en el servidor.
+- [x] Endpoint `POST /api/v1/recipes/sync-external`: consulta proveedores externos en vivo (**TheMealDB Mexican Cuisine API** y **DummyJSON Recipes**), traduce ingredientes al español, calcula el costo estimado en MXN por porción y los inserta en PostgreSQL sin duplicados (`external_id`).
+- [x] Endpoints `POST /api/v1/recipes` y `POST /api/v1/recipes/bulk` para agregar o actualizar recetas en vivo sin recompilar la app Android.
+  - Archivos: `backend/app/recipe_ingestor.py`, `backend/app/main.py`.
+
+### 9.3 Adaptación Multiusuario y Cloud Sync en la App Android
+- [x] `ChefsitoDatabase` subido a **versión 5**: `IngredientEntity` ahora incluye `userId`, `RecipeEntity` incluye `source` y `externalId`, y se añade `UserFavoriteEntity` (`user_favorites`) para aislar favoritos por usuario.
+- [x] `SessionManager` expone `activeUserIdFlow`, almacena el token JWT de AWS y permite configurar en vivo la URL del servidor EC2 (`getApiBaseUrl` / `saveApiBaseUrl`).
+- [x] Nuevo cliente `ChefsitoCloudApiService` (`data/remote/ChefsitoCloudApiService.kt`) para login/registro JWT, sincronización de despensa por usuario, favoritos y catálogo dinámico de recetas.
+- [x] `PlanScreen` incorpora la tarjeta **Catálogo Dinámico** con los botones **"Actualizar de AWS"** (sincroniza e importa nuevas recetas externas) y **"+ Nueva receta"** (publica recetas nuevas en AWS RDS y en Room).
+- [x] `ProfileScreen` incorpora la sección **Servidor AWS Cloud (EC2 + RDS)** para configurar la IP/DNS pública de la instancia EC2 del laboratorio de AWS.
+  - Archivos: `data/local/ChefsitoDatabase.kt`, `data/local/entity/IngredientEntity.kt`, `data/local/entity/RecipeEntity.kt`, `data/local/entity/UserFavoriteEntity.kt`, `data/local/dao/IngredientDao.kt`, `data/local/dao/RecipeDao.kt`, `data/remote/ChefsitoCloudApiService.kt`, `data/repository/AuthRepositoryImpl.kt`, `data/repository/RecipeRepository.kt`, `data/repository/RecipeRepositoryImpl.kt`, `data/repository/IngredientRepositoryImpl.kt`, `utils/SessionManager.kt`, `ui/viewmodel/ChefViewModel.kt`, `ui/recipe/RecipeViewModel.kt`, `ui/recipe/RecipeUiState.kt`, `ui/screens/plan/PlanScreen.kt`, `ui/screens/profile/ProfileScreen.kt`, `ui/screens/auth/AuthScreen.kt`, `AndroidManifest.xml`.
+
+### 9.4 Contenedores Docker y Guía de Laboratorio AWS
+- [x] `backend/Dockerfile` con usuario no privilegiado (`chefsito`), `HEALTHCHECK` y workers concurrentes.
+- [x] `docker-compose.yml` en la raíz con servicio `db` (`postgres:16-alpine`) y `api` (`chefsito_cloud_api`).
+- [x] Script `deploy_aws_ec2.sh` con configuración de firewall `UFW` y despliegue automatizado con Docker Compose.
+- [x] Guía completa `AWS_DEPLOYMENT_GUIDE.md` para AWS Academy Learner Lab (VPC, Security Groups `sg-chefsito-backend` y `sg-chefsito-rds`, RDS PostgreSQL privado, EC2 con `LabRole`).
+  - Archivos: `backend/Dockerfile`, `docker-compose.yml`, `deploy_aws_ec2.sh`, `AWS_DEPLOYMENT_GUIDE.md`.
